@@ -1,0 +1,47 @@
+server:
+  port: 9000
+  error:
+    include-message: always
+    include-binding-errors: always
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+
+management:
+  server.port: 8000
+  tracing.enabled: false
+  metrics:
+    distribution:
+      percentiles:
+        http.server.requests: 0.5, 0.75, 0.99
+        backend.request: 0.5, 0.75, 0.99
+    tags:
+      application: api-gateway
+      environment: local
+  endpoints:
+    web:
+      exposure:
+        include: info,health,prometheus,metrics
+    enabled-by-default: true
+  endpoint:
+    info:
+      enabled: true
+    shutdown:
+      enabled: false
+    health:
+      show-details: always
+
+backend:
+  microservices:
+    - name: account
+      base-url: http://localhost:8081/
+    - name: messaging
+      base-url: http://localhost:8082/api/v1
+    - name: connections
+      base-url: http://localhost:8083/api/v1
+    - name: notifications
+      base-url: http://localhost:8084/api/v1
+    - name: content
+      base-url: http://localhost:8085/api/v1

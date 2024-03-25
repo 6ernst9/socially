@@ -1,0 +1,167 @@
+{
+	"info": {
+		"_postman_id": "2d4691d6-757e-425a-89b0-00360f8b028d",
+		"name": "Accounts",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24635207"
+	},
+	"item": [
+		{
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"robert_ernst\",\r\n    \"password\": \"MyTest123\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "register",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"fullName\": \"Paul Sirbu\",\r\n    \"username\": \"paul_sirbu\",\r\n    \"email\": \"iampaul10@gmail.com\",\r\n    \"phoneNumber\": \"0722850830\",\r\n    \"password\": \"MyTest123\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get account by id",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/get-account/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"get-account",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search by term",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"fullName\": \"Robert Ernst\",\r\n    \"username\": \"robert_ernst\",\r\n    \"email\": \"robert_ernst@gmail.com\",\r\n    \"phoneNumber\": \"0736611684\",\r\n    \"password\": \"MyTest123\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/search-by-term/cristi",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"search-by-term",
+						"cristi"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update account",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\": 1,\r\n    \"profilePhoto\": \"\",\r\n    \"username\": \"robert_ernst\",\r\n    \"password\": \"MyTest123\",\r\n    \"fullName\": \"Robert Ernst\",\r\n    \"email\": \"robert_ernst1@gmail.com\",\r\n    \"phoneNumber\": \"0736611684\",\r\n    \"isAdmin\": false\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/update-account",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"update-account"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete account",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/delete-account/1/5",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"delete-account",
+						"1",
+						"5"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

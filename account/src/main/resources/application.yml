@@ -1,0 +1,16 @@
+server:
+  port: 8081
+  error:
+    include-message: always
+    include-binding-errors: always
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/socialmedia
+    username: postgres
+    password: sspostgres2022
