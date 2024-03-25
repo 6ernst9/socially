@@ -20,10 +20,13 @@ public class Connection {
     @NonNull
     private List<User> friends;
     @NonNull
+    private List<Long> requests;
+    @NonNull
     private List<Long> blocked;
     public Connection(@NonNull Long id){
         this.id = id;
         this.friends = new ArrayList<>();
+        this.requests = new ArrayList<>();
         this.blocked = new ArrayList<>();
     }
 }

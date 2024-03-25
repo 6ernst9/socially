@@ -1,5 +1,9 @@
 package com.robert.ernst.connection.cache;
 
+import com.robert.ernst.connection.cache.annotations.CacheableEvict;
+import com.robert.ernst.connection.cache.annotations.CacheableReactive;
+import com.robert.ernst.connection.cache.dto.CacheEntry;
+import com.robert.ernst.connection.cache.dto.CacheKey;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -13,34 +17,35 @@ import java.util.concurrent.ConcurrentHashMap;
 @Aspect
 @Component
 public class CachingAspect {
-    private final Map<String, CacheEntry> usernameCache = new ConcurrentHashMap<>();
-    private final Map<Long, CacheEntry> idCache = new ConcurrentHashMap<>();
-    private final Map<String, CacheEntry> termCache = new ConcurrentHashMap<>();
+    private final Map<Long, CacheEntry> requestsCache = new ConcurrentHashMap<>();
+    private final Map<Long, CacheEntry> friendsCache = new ConcurrentHashMap<>();
+    private final Map<Long, CacheEntry> blockedCache = new ConcurrentHashMap<>();
+    private final Map<CacheKey, CacheEntry> connectionCache = new ConcurrentHashMap<>();
 
     @Around("@annotation(caching)")
     public Object cache(ProceedingJoinPoint joinPoint, CacheableReactive caching) throws Throwable {
-        if(caching.key().equals("username")){
-            return cacheUsername(joinPoint);
-        } else if(caching.key().equals("id")){
-            return cacheId(joinPoint);
-        } else {
-            return cacheTerm(joinPoint);
-        }
+        return switch (caching.key()) {
+            case "requests" -> cacheId(joinPoint, requestsCache);
+            case "friends" -> cacheId(joinPoint, friendsCache);
+            case "blocked" -> cacheId(joinPoint, blockedCache);
+            case "connection" -> cacheConnection(joinPoint);
+        };
     }
 
     @Around("@annotation(evict)")
     public Object evict(ProceedingJoinPoint joinPoint, CacheableEvict evict) throws Throwable {
-        if(evict.method().equals("update")){
-           updateEvict(joinPoint);
-        } else {
-            deleteEvict(joinPoint);
+        switch (evict.method()) {
+            case "accepted" -> acceptEvict(joinPoint);
+            case "requested" -> requestEvict(joinPoint);
+            case "removed" -> removeEvict(joinPoint);
+            case "blocked" -> blockEvict(joinPoint);
         }
         return joinPoint.proceed();
     }
 
-    private Object cacheTerm(ProceedingJoinPoint joinPoint) throws Throwable {
-        String term = (String)joinPoint.getArgs()[0];
-        var entry = termCache.get(term);
+    private Object cacheId(ProceedingJoinPoint joinPoint, Map<Long, CacheEntry> cache) throws Throwable {
+        var id = (Long)joinPoint.getArgs()[0];
+        var entry = cache.get(id);
 
         if(entry!=null && !entry.isExpired()){
             return Flux.fromIterable((Iterable<?>)entry.getValue());
@@ -48,54 +53,73 @@ public class CachingAspect {
             var result = (Flux<?>)joinPoint.proceed();
             var results = result.toIterable();
 
-            termCache.put(term, new CacheEntry(results));
+            cache.put(id, new CacheEntry(results));
             return result;
         }
     }
 
-    private Object cacheId(ProceedingJoinPoint joinPoint) throws Throwable {
+    private Object cacheConnection(ProceedingJoinPoint joinPoint) throws Throwable {
+        var id = (Long)joinPoint.getArgs()[0];
+        var userId = (Long)joinPoint.getArgs()[1];
+
+        var key = new CacheKey(id, userId);
+        var entry = connectionCache.get(new CacheKey(id, userId));
+
+        if(entry!=null && !entry.isExpired()){
+            return Mono.just(entry.getValue());
+        } else {
+            var result = (Mono<?>)joinPoint.proceed();
+            var account = result.block();
+
+            connectionCache.put(key, new CacheEntry(account));
+            return result;
+        }
+    }
+
+
+
+    private void acceptEvict(ProceedingJoinPoint joinPoint){
         Long id = (Long)joinPoint.getArgs()[0];
-        var entry = idCache.get(id);
+        Long userId = (Long)joinPoint.getArgs()[1];
 
-        if(entry!=null && !entry.isExpired()){
-            return Mono.just(entry.getValue());
-        } else {
-            var result = (Mono<?>)joinPoint.proceed();
-            var account = result.block();
+        friendsCache.remove(id);
+        friendsCache.remove(userId);
+        requestsCache.remove(id);
 
-            idCache.put(id, new CacheEntry(account));
-            return result;
-        }
+        connectionCache.remove(new CacheKey(id, userId));
+        connectionCache.remove(new CacheKey(userId, id));
     }
 
-    private Object cacheUsername(ProceedingJoinPoint joinPoint) throws Throwable {
-        String username = (String)joinPoint.getArgs()[0];
-        var entry = usernameCache.get(username);
+    private void requestEvict(ProceedingJoinPoint joinPoint) {
+        Long id = (Long)joinPoint.getArgs()[0];
+        Long userId = (Long)joinPoint.getArgs()[1];
 
-        if(entry!=null && !entry.isExpired()){
-            return Mono.just(entry.getValue());
-        } else {
-            var result = (Mono<?>)joinPoint.proceed();
-            var account = result.block();
-
-            usernameCache.put(username, new CacheEntry(account));
-            return result;
-        }
+        requestsCache.remove(userId);
+        connectionCache.remove(new CacheKey(id, userId));
+        connectionCache.remove(new CacheKey(userId, id));
     }
 
-    private void updateEvict(ProceedingJoinPoint joinPoint){
-        Account account = (Account)joinPoint.getArgs()[0];
-        idCache.remove(account.getId());
-        usernameCache.remove(account.getUsername());
-        termCache.clear();
+    private void blockEvict(ProceedingJoinPoint joinPoint) {
+        Long id = (Long)joinPoint.getArgs()[0];
+        Long userId = (Long)joinPoint.getArgs()[1];
+
+        friendsCache.remove(id);
+        friendsCache.remove(userId);
+
+        blockedCache.remove(id);
+
+        connectionCache.remove(new CacheKey(id, userId));
+        connectionCache.remove(new CacheKey(userId, id));
     }
 
-    private void deleteEvict(ProceedingJoinPoint joinPoint){
-        Long id = (Long)joinPoint.getArgs()[1];
-        idCache.remove(id);
-        usernameCache.clear();
-        termCache.clear();
+    private void removeEvict(ProceedingJoinPoint joinPoint){
+        Long id = (Long)joinPoint.getArgs()[0];
+        Long userId = (Long)joinPoint.getArgs()[1];
+
+        friendsCache.remove(id);
+        friendsCache.remove(userId);
+
+        connectionCache.remove(new CacheKey(id, userId));
+        connectionCache.remove(new CacheKey(userId, id));
     }
-
-
 }

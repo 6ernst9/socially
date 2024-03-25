@@ -1,1 +1,16 @@
-spring.application.name=connection
+server:
+  port: 8081
+  error:
+    include-message: always
+    include-binding-errors: always
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+
+spring:
+  data:
+    db-name: "socialmedia"
+    mongodb:
+      uri: "mongodb://ssmongo:ssmongo2022@localhost:27017/${spring.data.db-name}"

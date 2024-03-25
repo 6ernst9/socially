@@ -1,4 +1,4 @@
-package com.robert.ernst.connection.cache;
+package com.robert.ernst.connection.cache.dto;
 
 import lombok.Getter;
 

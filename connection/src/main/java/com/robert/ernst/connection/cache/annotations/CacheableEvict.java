@@ -1,4 +1,4 @@
-package com.robert.ernst.connection.cache;
+package com.robert.ernst.connection.cache.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
