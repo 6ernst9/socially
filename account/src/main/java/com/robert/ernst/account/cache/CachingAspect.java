@@ -1,5 +1,8 @@
 package com.robert.ernst.account.cache;
 
+import com.robert.ernst.account.cache.annotations.CacheableEvict;
+import com.robert.ernst.account.cache.annotations.CacheableReactive;
+import com.robert.ernst.account.cache.dto.CacheEntry;
 import com.robert.ernst.account.dto.Account;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -14,9 +17,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Aspect
 @Component
 public class CachingAspect {
-    private final Map<String, CacheEntry> usernameCache = new ConcurrentHashMap<>();
-    private final Map<Long, CacheEntry> idCache = new ConcurrentHashMap<>();
-    private final Map<String, CacheEntry> termCache = new ConcurrentHashMap<>();
+    private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
+    private final String ID_KEY = "id:";
+    private final String USERNAME_KEY = "username:";
+    private final String TERM_KEY = "term:";
 
     @Around("@annotation(caching)")
     public Object cache(ProceedingJoinPoint joinPoint, CacheableReactive caching) throws Throwable {
@@ -40,8 +44,10 @@ public class CachingAspect {
     }
 
     private Object cacheTerm(ProceedingJoinPoint joinPoint) throws Throwable {
-        String term = (String)joinPoint.getArgs()[0];
-        var entry = termCache.get(term);
+        var term = (String)joinPoint.getArgs()[0];
+        var key = TERM_KEY + term;
+
+        var entry = cache.get(key);
 
         if(entry!=null && !entry.isExpired()){
             return Flux.fromIterable((Iterable<?>)entry.getValue());
@@ -49,14 +55,16 @@ public class CachingAspect {
             var result = (Flux<?>)joinPoint.proceed();
             var results = result.toIterable();
 
-            termCache.put(term, new CacheEntry(results));
+            cache.put(key, new CacheEntry(results));
             return result;
         }
     }
 
     private Object cacheId(ProceedingJoinPoint joinPoint) throws Throwable {
-        Long id = (Long)joinPoint.getArgs()[0];
-        var entry = idCache.get(id);
+        var id = (Long)joinPoint.getArgs()[0];
+        var key = ID_KEY + id;
+
+        var entry = cache.get(key);
 
         if(entry!=null && !entry.isExpired()){
             return Mono.just(entry.getValue());
@@ -64,14 +72,16 @@ public class CachingAspect {
             var result = (Mono<?>)joinPoint.proceed();
             var account = result.block();
 
-            idCache.put(id, new CacheEntry(account));
+            cache.put(key, new CacheEntry(account));
             return result;
         }
     }
 
     private Object cacheUsername(ProceedingJoinPoint joinPoint) throws Throwable {
         String username = (String)joinPoint.getArgs()[0];
-        var entry = usernameCache.get(username);
+        var key = USERNAME_KEY + username;
+
+        var entry = cache.get(key);
 
         if(entry!=null && !entry.isExpired()){
             return Mono.just(entry.getValue());
@@ -79,24 +89,31 @@ public class CachingAspect {
             var result = (Mono<?>)joinPoint.proceed();
             var account = result.block();
 
-            usernameCache.put(username, new CacheEntry(account));
+            cache.put(key, new CacheEntry(account));
             return result;
         }
     }
 
     private void updateEvict(ProceedingJoinPoint joinPoint){
-        Account account = (Account)joinPoint.getArgs()[0];
-        idCache.remove(account.getId());
-        usernameCache.remove(account.getUsername());
-        termCache.clear();
+        var account = (Account)joinPoint.getArgs()[0];
+        cache.remove(ID_KEY + account.getId());
+        cache.remove(USERNAME_KEY + account.getUsername());
+
+        cache.forEach((key, value) -> {
+            if (key.contains(TERM_KEY)) {
+                cache.remove(key);
+            }
+        });
     }
 
     private void deleteEvict(ProceedingJoinPoint joinPoint){
-        Long id = (Long)joinPoint.getArgs()[1];
-        idCache.remove(id);
-        usernameCache.clear();
-        termCache.clear();
+        var id = (Long)joinPoint.getArgs()[1];
+        cache.remove(ID_KEY + id);
+
+        cache.forEach((key, value) -> {
+            if (key.contains(USERNAME_KEY) || key.contains(TERM_KEY)) {
+                cache.remove(key);
+            }
+        });
     }
-
-
 }

@@ -1,9 +1,9 @@
 package com.robert.ernst.messages.service;
 
-import com.robert.ernst.messages.cache.Caching;
+import com.robert.ernst.messages.cache.annotations.CacheableEvict;
+import com.robert.ernst.messages.cache.annotations.CacheableReactive;
 import com.robert.ernst.messages.dto.Message;
 import com.robert.ernst.messages.repository.MessageRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,11 +11,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -26,40 +25,27 @@ public class MessagingService {
     @Value("${microservices.account.base-url}")
     private String accountsUrl;
 
-    @Caching(value = "conversation")
-    public List<Message> getConversations(Long id) {
-        var conversations = new ArrayList<Message>();
-        var conversationPartners = new HashSet<Long>();
-
-        messageRepository.getAllConversations(id)
-                .forEach(conv -> {
-                    if(conv.getSenderId().equals(id)) {
-                        conversationPartners.add(conv.getReceiverId());
-                    } else {
-                        conversationPartners.add(conv.getSenderId());
-                    }
-                });
-
-        conversationPartners.forEach(partnerId -> {
-            var messages = messageRepository.getChats(id, partnerId);
-            var latestSent = messages.get(messages.size()-1);
-
-            conversations.add(latestSent);
-
-        });
-        return conversations;
+    @CacheableReactive(key = "conversations")
+    public Flux<Message> getConversations(Long id) {
+        return messageRepository.getAllConversations(id)
+                .map(conv -> conv.getSenderId().equals(id)
+                        ? conv.getReceiverId()
+                        : conv.getSenderId())
+                .collect(Collectors.toSet())
+                .flux()
+                .flatMap(Flux::fromIterable)
+                .flatMap(partnerId -> messageRepository.getChats(id, partnerId).last());
     }
 
-    @Caching(value = "chats")
-    public List<Message> getChats(Long senderId, Long receiverId){
+    @CacheableReactive(key = "chats")
+    public Flux<Message> getChats(Long senderId, Long receiverId){
         return messageRepository.getChats(senderId, receiverId);
     }
 
-    @Transactional
-    public String deleteConversation(Long id, Long partner) {
-        getChats(id, partner).forEach(msg -> messageRepository.deleteById(msg.getId()));
-
-        return "Conversation deleted successfully";
+    @CacheableEvict(method = "delete")
+    public Mono<String> deleteConversation(Long id, Long partner) {
+        return getChats(id, partner).map(msg -> messageRepository.deleteById(msg.getId()))
+                .then(Mono.just("Conversation deleted successfully"));
     }
 
     private Mono<Object> getUser(Long id){

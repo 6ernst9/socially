@@ -1,19 +1,17 @@
 package com.robert.ernst.messages.repository;
 
-
 import com.robert.ernst.messages.dto.Message;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Flux;
 
-import java.util.List;
+public interface MessageRepository extends ReactiveCrudRepository<Message, Long> {
+    @Query("SELECT * FROM messages WHERE sender_id = :id OR receiver_id = :id ORDER BY timestamp")
+    Flux<Message> getAllConversations(Long id);
 
-public interface MessageRepository extends JpaRepository<Message, Long> {
-    @Query("SELECT m FROM Message m WHERE m.senderId = :id OR m.receiverId = :id ORDER BY m.timestamp")
-    List<Message> getAllConversations(Long id);
-
-    @Query("SELECT m FROM Message m " +
-            "WHERE m.senderId = :sender AND m.receiverId = :receiver " +
-            "OR m.senderId = :receiver AND m.receiverId = :sender " +
-            "ORDER BY m.timestamp")
-    List<Message> getChats(Long sender, Long receiver);
+    @Query("SELECT * FROM messages " +
+            "WHERE sender_id = :sender AND receiver_id = :receiver " +
+            "OR sender_id = :receiver AND receiver_id = :sender " +
+            "ORDER BY timestamp")
+    Flux<Message> getChats(Long sender, Long receiver);
 }

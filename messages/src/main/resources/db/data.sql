@@ -1,0 +1,22 @@
+INSERT INTO messages (sender_id, receiver_id, content, timestamp, seen)
+VALUES
+    (1, 2, 'Hey there', NOW(), FALSE),
+    (2, 1, 'Heii', NOW(), FALSE),
+    (1, 2, 'How are you?', NOW(), FALSE),
+    (2, 1, 'good, you??', NOW(), FALSE),
+    (1, 2, 'same, nothing new', NOW(), FALSE),
+    (2, 1, 'do you want to go out sometimes?', NOW(), FALSE),
+    (1, 2, 'I would love that', NOW(), FALSE),
+    (2, 1, 'Tomorrow at 8pm?', NOW(), FALSE),
+    (1, 2, 'Sounds like a date', NOW(), FALSE),
+    (2, 1, 'excellent', NOW(), FALSE),
+    (3, 4, 'Hey there', NOW(), FALSE),
+    (4, 3, 'Heii', NOW(), FALSE),
+    (3, 4, 'How are you?', NOW(), FALSE),
+    (4, 3, 'good, you??', NOW(), FALSE),
+    (3, 4, 'same, nothing new', NOW(), FALSE),
+    (4, 3, 'do you want to go out sometimes?', NOW(), FALSE),
+    (3, 4, 'I would love that', NOW(), FALSE),
+    (4, 3, 'Tomorrow at 8pm?', NOW(), FALSE),
+    (3, 4, 'Sounds like a date', NOW(), FALSE),
+    (4, 3, 'excellent', NOW(), FALSE);

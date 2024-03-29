@@ -1,7 +1,7 @@
 package com.robert.ernst.account.service;
 
-import com.robert.ernst.account.cache.CacheableReactive;
-import com.robert.ernst.account.cache.CacheableEvict;
+import com.robert.ernst.account.cache.annotations.CacheableReactive;
+import com.robert.ernst.account.cache.annotations.CacheableEvict;
 import com.robert.ernst.account.dto.Account;
 import com.robert.ernst.account.repository.AccountsRepository;
 import lombok.NonNull;

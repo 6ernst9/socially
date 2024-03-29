@@ -1,4 +1,4 @@
-package com.robert.ernst.messages.cache;
+package com.robert.ernst.account.cache.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Caching {
-    String value();
+public @interface CacheableEvict {
+    String method();
 }

@@ -1,11 +1,11 @@
 package com.robert.ernst.messages.dto;
 
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
 
-@Entity
 @Getter
 @Setter
 @Table(name="messages")
@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class Message {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     @NonNull
     private Long senderId;

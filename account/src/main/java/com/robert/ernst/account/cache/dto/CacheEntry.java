@@ -1,4 +1,4 @@
-package com.robert.ernst.account.cache;
+package com.robert.ernst.account.cache.dto;
 
 import lombok.Getter;
 

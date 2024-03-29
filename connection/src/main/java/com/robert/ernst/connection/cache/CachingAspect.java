@@ -3,7 +3,6 @@ package com.robert.ernst.connection.cache;
 import com.robert.ernst.connection.cache.annotations.CacheableEvict;
 import com.robert.ernst.connection.cache.annotations.CacheableReactive;
 import com.robert.ernst.connection.cache.dto.CacheEntry;
-import com.robert.ernst.connection.cache.dto.CacheKey;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -17,17 +16,18 @@ import java.util.concurrent.ConcurrentHashMap;
 @Aspect
 @Component
 public class CachingAspect {
-    private final Map<Long, CacheEntry> requestsCache = new ConcurrentHashMap<>();
-    private final Map<Long, CacheEntry> friendsCache = new ConcurrentHashMap<>();
-    private final Map<Long, CacheEntry> blockedCache = new ConcurrentHashMap<>();
-    private final Map<CacheKey, CacheEntry> connectionCache = new ConcurrentHashMap<>();
+    private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
+    private final String FRIENDS_KEY = "friends:";
+    private final String BLOCKED_KEY = "blocked:";
+    private final String REQUESTS_KEY = "requests:";
+    private final String CONNECTION_KEY = "connection:%s:%s";
 
     @Around("@annotation(caching)")
     public Object cache(ProceedingJoinPoint joinPoint, CacheableReactive caching) throws Throwable {
         return switch (caching.key()) {
-            case "requests" -> cacheId(joinPoint, requestsCache);
-            case "friends" -> cacheId(joinPoint, friendsCache);
-            case "blocked" -> cacheId(joinPoint, blockedCache);
+            case "requests" -> cache(joinPoint, REQUESTS_KEY);
+            case "friends" -> cache(joinPoint, FRIENDS_KEY);
+            case "blocked" -> cache(joinPoint, BLOCKED_KEY);
             case "connection" -> cacheConnection(joinPoint);
         };
     }
@@ -43,9 +43,11 @@ public class CachingAspect {
         return joinPoint.proceed();
     }
 
-    private Object cacheId(ProceedingJoinPoint joinPoint, Map<Long, CacheEntry> cache) throws Throwable {
+    private Object cache(ProceedingJoinPoint joinPoint, String key) throws Throwable {
         var id = (Long)joinPoint.getArgs()[0];
-        var entry = cache.get(id);
+        var set = key + id;
+
+        var entry = cache.get(set);
 
         if(entry!=null && !entry.isExpired()){
             return Flux.fromIterable((Iterable<?>)entry.getValue());
@@ -53,7 +55,7 @@ public class CachingAspect {
             var result = (Flux<?>)joinPoint.proceed();
             var results = result.toIterable();
 
-            cache.put(id, new CacheEntry(results));
+            cache.put(set, new CacheEntry(results));
             return result;
         }
     }
@@ -62,8 +64,8 @@ public class CachingAspect {
         var id = (Long)joinPoint.getArgs()[0];
         var userId = (Long)joinPoint.getArgs()[1];
 
-        var key = new CacheKey(id, userId);
-        var entry = connectionCache.get(new CacheKey(id, userId));
+        var key = CONNECTION_KEY.formatted(id, userId);
+        var entry = cache.get(key);
 
         if(entry!=null && !entry.isExpired()){
             return Mono.just(entry.getValue());
@@ -71,7 +73,7 @@ public class CachingAspect {
             var result = (Mono<?>)joinPoint.proceed();
             var account = result.block();
 
-            connectionCache.put(key, new CacheEntry(account));
+            cache.put(key, new CacheEntry(account));
             return result;
         }
     }
@@ -82,44 +84,56 @@ public class CachingAspect {
         Long id = (Long)joinPoint.getArgs()[0];
         Long userId = (Long)joinPoint.getArgs()[1];
 
-        friendsCache.remove(id);
-        friendsCache.remove(userId);
-        requestsCache.remove(id);
-
-        connectionCache.remove(new CacheKey(id, userId));
-        connectionCache.remove(new CacheKey(userId, id));
+        cache.forEach((key, value) -> {
+            if(key.equals(FRIENDS_KEY + id)
+                    || key.equals(FRIENDS_KEY + userId)
+                    || key.equals(REQUESTS_KEY + userId)
+                    || key.equals(CONNECTION_KEY.formatted(id, userId))
+                    || key.equals(CONNECTION_KEY.formatted(userId, id))){
+                cache.remove(key);
+            }
+        });
     }
 
     private void requestEvict(ProceedingJoinPoint joinPoint) {
         Long id = (Long)joinPoint.getArgs()[0];
         Long userId = (Long)joinPoint.getArgs()[1];
 
-        requestsCache.remove(userId);
-        connectionCache.remove(new CacheKey(id, userId));
-        connectionCache.remove(new CacheKey(userId, id));
+        cache.forEach((key, value) -> {
+            if(key.equals(REQUESTS_KEY + userId)
+                    || key.equals(CONNECTION_KEY.formatted(id, userId))
+                    || key.equals(CONNECTION_KEY.formatted(userId, id))){
+                cache.remove(key);
+            }
+        });
     }
 
     private void blockEvict(ProceedingJoinPoint joinPoint) {
         Long id = (Long)joinPoint.getArgs()[0];
         Long userId = (Long)joinPoint.getArgs()[1];
 
-        friendsCache.remove(id);
-        friendsCache.remove(userId);
-
-        blockedCache.remove(id);
-
-        connectionCache.remove(new CacheKey(id, userId));
-        connectionCache.remove(new CacheKey(userId, id));
+        cache.forEach((key, value) -> {
+            if(key.equals(FRIENDS_KEY + id)
+                    || key.equals(FRIENDS_KEY + userId)
+                    || key.equals(BLOCKED_KEY + id)
+                    || key.equals(CONNECTION_KEY.formatted(id, userId))
+                    || key.equals(CONNECTION_KEY.formatted(userId, id))){
+                cache.remove(key);
+            }
+        });
     }
 
     private void removeEvict(ProceedingJoinPoint joinPoint){
         Long id = (Long)joinPoint.getArgs()[0];
         Long userId = (Long)joinPoint.getArgs()[1];
 
-        friendsCache.remove(id);
-        friendsCache.remove(userId);
-
-        connectionCache.remove(new CacheKey(id, userId));
-        connectionCache.remove(new CacheKey(userId, id));
+        cache.forEach((key, value) -> {
+            if(key.equals(FRIENDS_KEY + id)
+                    || key.equals(FRIENDS_KEY + userId)
+                    || key.equals(CONNECTION_KEY.formatted(id, userId))
+                    || key.equals(CONNECTION_KEY.formatted(userId, id))){
+                cache.remove(key);
+            }
+        });
     }
 }
