@@ -3,14 +3,11 @@ package com.robert.ernst.messages.service;
 import com.robert.ernst.messages.cache.annotations.CacheableEvict;
 import com.robert.ernst.messages.cache.annotations.CacheableReactive;
 import com.robert.ernst.messages.dto.Message;
+import com.robert.ernst.messages.dto.MessageRequest;
 import com.robert.ernst.messages.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -20,10 +17,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class MessagingService {
-    private final WebClient webClient;
     private final MessageRepository messageRepository;
-    @Value("${microservices.account.base-url}")
-    private String accountsUrl;
 
     @CacheableReactive(key = "conversations")
     public Flux<Message> getConversations(Long id) {
@@ -42,27 +36,33 @@ public class MessagingService {
         return messageRepository.getChats(senderId, receiverId);
     }
 
-    @CacheableEvict(method = "delete")
-    public Mono<String> deleteConversation(Long id, Long partner) {
-        return getChats(id, partner).map(msg -> messageRepository.deleteById(msg.getId()))
-                .then(Mono.just("Conversation deleted successfully"));
+    @CacheableEvict(method = "send")
+    public Mono<Message> sendMessage(MessageRequest messageRequest) {
+        return messageRepository.save(
+                new Message(
+                        messageRequest.senderId(),
+                        messageRequest.receiverId(),
+                        messageRequest.content()));
     }
 
-    private Mono<Object> getUser(Long id){
-        var request = webClient.get()
-                .uri(accountsUrl + "/get-account/" + id)
-                .accept(MediaType.APPLICATION_JSON);
+    @CacheableEvict(method = "read")
+    public Mono<Message> readMessage(Long id) {
+        return messageRepository.findById(id)
+                .flatMap(message -> {
+                    message.setSeen(true);
 
-        return request.exchangeToMono(response -> {
-            if (response.statusCode() == HttpStatus.OK) {
-                return response.bodyToMono(String.class).flatMap(Mono::just);
-            } else {
-                return response.bodyToMono(String.class)
-                        .flatMap(err -> {
-                            log.error("Request failed: {}", err);
-                            return Mono.error(new RuntimeException("Request failed:" + err));
-                        });
-            }
-        });
+                    return messageRepository.save(message);
+                });
+    }
+
+    @CacheableEvict(method = "delete")
+    public Mono<String> deleteConversation(Long id, Long partner) {
+        return messageRepository.getChats(id, partner).flatMap(msg -> {
+            var visibility = msg.getVisibility();
+            visibility.remove(id);
+
+            msg.setVisibility(visibility);
+            return messageRepository.save(msg);
+        }).then(Mono.just("Conversation deleted successfully"));
     }
 }

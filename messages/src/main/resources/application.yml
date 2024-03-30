@@ -9,10 +9,6 @@ logging:
     root: INFO
     org.springframework.web: INFO
 
-microservices:
-  account:
-    base-url: http://localhost:8081/api/v1
-
 spring:
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/socialmedia

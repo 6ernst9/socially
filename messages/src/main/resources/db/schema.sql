@@ -6,5 +6,6 @@ CREATE TABLE messages (
                           receiver_id BIGINT NOT NULL,
                           content TEXT NOT NULL,
                           timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-                          seen BOOLEAN NOT NULL
+                          seen BOOLEAN NOT NULL,
+                          visibility BIGINT[] NOT NULL
 );

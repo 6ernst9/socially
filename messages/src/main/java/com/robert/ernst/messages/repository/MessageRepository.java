@@ -6,12 +6,16 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
 
 public interface MessageRepository extends ReactiveCrudRepository<Message, Long> {
-    @Query("SELECT * FROM messages WHERE sender_id = :id OR receiver_id = :id ORDER BY timestamp")
+    @Query("SELECT * FROM messages " +
+            "WHERE (sender_id = :id OR receiver_id = :id) " +
+            "AND :id = ANY(visibility) " +
+            "ORDER BY timestamp")
     Flux<Message> getAllConversations(Long id);
 
     @Query("SELECT * FROM messages " +
-            "WHERE sender_id = :sender AND receiver_id = :receiver " +
-            "OR sender_id = :receiver AND receiver_id = :sender " +
+            "WHERE (sender_id = :sender AND receiver_id = :receiver " +
+            "OR sender_id = :receiver AND receiver_id = :sender) " +
+            "AND :sender = ANY(visibility) " +
             "ORDER BY timestamp")
     Flux<Message> getChats(Long sender, Long receiver);
 }

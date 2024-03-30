@@ -3,11 +3,14 @@ package com.robert.ernst.messages.cache;
 import com.robert.ernst.messages.cache.annotations.CacheableEvict;
 import com.robert.ernst.messages.cache.annotations.CacheableReactive;
 import com.robert.ernst.messages.cache.dto.CacheEntry;
+import com.robert.ernst.messages.dto.Message;
+import com.robert.ernst.messages.dto.MessageRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,7 +24,7 @@ public class CachingAspect {
 
     @Around("@annotation(caching)")
     public Object cache(ProceedingJoinPoint joinPoint, CacheableReactive caching) throws Throwable {
-        if(caching.value().equals("conversation")){
+        if(caching.key().equals("conversations")){
             return cacheConversation(joinPoint);
         } else {
             return cacheChat(joinPoint);
@@ -30,11 +33,14 @@ public class CachingAspect {
 
     @Around("@annotation(evict)")
     public Object evict(ProceedingJoinPoint joinPoint, CacheableEvict evict) throws Throwable {
-        if(evict.method().equals("update")){
-           updateEvict(joinPoint);
-        } else {
+        if(evict.method().equals("read")) {
+            return readEvict(joinPoint);
+        } else if(evict.method().equals("delete")) {
             deleteEvict(joinPoint);
+        } else {
+            sendEvict(joinPoint);
         }
+
         return joinPoint.proceed();
     }
 
@@ -73,17 +79,35 @@ public class CachingAspect {
         }
     }
 
-    private void updateEvict(ProceedingJoinPoint joinPoint){
+    private Object readEvict(ProceedingJoinPoint joinPoint) throws Throwable {
+        var result = (Mono<Message>)joinPoint.proceed();
+        var message = result.block();
 
+        var senderId = message.getSenderId();
+        var receiverId = message.getReceiverId();
+
+        removeCache(senderId, receiverId);
+        return result;
     }
 
-    private void deleteEvict(ProceedingJoinPoint joinPoint){
-        Long senderId = (Long)joinPoint.getArgs()[0];
-        Long receiverId = (Long)joinPoint.getArgs()[1];
+    private void deleteEvict(ProceedingJoinPoint joinPoint) {
+        var senderId = (Long)joinPoint.getArgs()[0];
+        var receiverId = (Long)joinPoint.getArgs()[1];
 
+        removeCache(senderId, receiverId);
+    }
+
+    private void sendEvict(ProceedingJoinPoint joinPoint) {
+        var message = (MessageRequest)joinPoint.getArgs()[0];
+        var senderId = message.senderId();
+        var receiverId = message.receiverId();
+
+        removeCache(senderId, receiverId);
+    }
+
+
+    private void removeCache(Long senderId, Long receiverId) {
         cache.remove(CHAT_KEY.formatted(senderId, receiverId));
         cache.remove(CONVERSATION_KEY + senderId);
     }
-
-
 }
