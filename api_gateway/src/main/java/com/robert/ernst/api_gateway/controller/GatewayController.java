@@ -17,28 +17,28 @@ public class GatewayController {
 
     @Timed
     @GetMapping
-    public Mono<?> get(@RequestBody ReqBody request) {
+    public Mono<Object> get(@RequestBody ReqBody request) {
         log.info("Received GET request to {}", request.path());
         return gatewayService.get(request.path());
     }
 
     @Timed
     @PostMapping
-    public Mono<?> post(@RequestBody ReqBody request) {
+    public Mono<Object> post(@RequestBody ReqBody request) {
         log.info("Received POST request to {}, with body: {}", request.path(), request.body());
         return gatewayService.post(request.path(), request.body());
     }
 
     @Timed
     @PutMapping
-    public Mono<?> update(@RequestBody ReqBody request) {
+    public Mono<Object> update(@RequestBody ReqBody request) {
         log.info("Received PUT request to {}, with body: {}", request.path(), request.body());
         return gatewayService.update(request.path(), request.body());
     }
 
     @Timed
     @DeleteMapping
-    public Mono<?> delete(@RequestBody ReqBody request) {
+    public Mono<Object> delete(@RequestBody ReqBody request) {
         log.info("Received PUT request to {}", request.path());
         return gatewayService.delete(request.path());
     }

@@ -4,14 +4,10 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.List;
-
 @Configuration
-@ConfigurationProperties(prefix = "backend")
+@ConfigurationProperties(prefix = "security")
 @Data
-public class MicroservicesProperties {
-    private List<Microservice> microservices;
-
-    public record Microservice(String name, String baseUrl){
-    }
+public class SecurityProperties {
+    private String clientId;
+    private String clientSecret;
 }

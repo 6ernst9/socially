@@ -33,6 +33,10 @@ management:
     health:
       show-details: always
 
+security:
+  client-id: "uuidgen"
+  client-secret: "Oasz/0+zo6oCnBDIMzhgmxcuhWN5NLkY36MEvrldxk4lyN7aab9D+kyGGZAfeq0iRSoV20bo6mIIgs27nRjLJFukqnOrJzwgRSB1rhy5ZiPXl84R3eoZmt4RS3UZRl7H"
+
 backend:
   microservices:
     - name: account

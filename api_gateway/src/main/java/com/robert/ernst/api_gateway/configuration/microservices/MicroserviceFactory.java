@@ -1,4 +1,4 @@
-package com.robert.ernst.api_gateway.configuration;
+package com.robert.ernst.api_gateway.configuration.microservices;
 
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;

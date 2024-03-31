@@ -9,6 +9,10 @@ logging:
     root: INFO
     org.springframework.web: INFO
 
+security:
+  client-id: uuidgen
+  client-secret: "Oasz/0+zo6oCnBDIMzhgmxcuhWN5NLkY36MEvrldxk4lyN7aab9D+kyGGZAfeq0iRSoV20bo6mIIgs27nRjLJFukqnOrJzwgRSB1rhy5ZiPXl84R3eoZmt4RS3UZRl7H"
+
 spring:
   data:
     db-name: "socialmedia"

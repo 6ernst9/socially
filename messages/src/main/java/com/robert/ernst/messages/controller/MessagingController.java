@@ -1,5 +1,6 @@
 package com.robert.ernst.messages.controller;
 
+import com.robert.ernst.messages.config.annotations.WmtSecurityMapping;
 import com.robert.ernst.messages.dto.Message;
 import com.robert.ernst.messages.dto.MessageRequest;
 import com.robert.ernst.messages.service.MessagingService;
@@ -18,8 +19,8 @@ import reactor.core.publisher.Mono;
 public class MessagingController {
     private final MessagingService messagingService;
 
-    @MessageMapping("/sendMessage")
     @SendTo("/topic/messages")
+    @MessageMapping("/sendMessage")
     public Mono<Message> sendMessage(@Payload MessageRequest message) {
         return messagingService.sendMessage(message);
     }
@@ -30,16 +31,19 @@ public class MessagingController {
     }
 
     @GetMapping("get-conversations/{id}")
+    @WmtSecurityMapping(path = "messaging.getConversations")
     public Flux<Message> getConversations(@PathVariable Long id) {
         return messagingService.getConversations(id);
     }
 
     @GetMapping("get-chats/{sender}/{receiver}")
+    @WmtSecurityMapping(path = "messaging.getChats")
     public Flux<Message> getChatsWith(@PathVariable Long sender, @PathVariable Long receiver){
         return messagingService.getChats(sender, receiver);
     }
 
     @DeleteMapping("delete-conversation/{id}/{partner}")
+    @WmtSecurityMapping(path = "messaging.deleteConversation")
     public Mono<String> deleteConversation(@PathVariable Long id, @PathVariable Long partner) {
         return messagingService.deleteConversation(id, partner);
     }
