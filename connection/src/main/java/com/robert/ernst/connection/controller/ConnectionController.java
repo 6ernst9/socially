@@ -1,7 +1,6 @@
 package com.robert.ernst.connection.controller;
 
 import com.robert.ernst.connection.config.annotations.WmtSecurityMapping;
-import com.robert.ernst.connection.dto.ConnectionRequest;
 import com.robert.ernst.connection.dto.ConnectionType;
 import com.robert.ernst.connection.dto.ResponseMessage;
 import com.robert.ernst.connection.dto.User;
@@ -43,38 +42,43 @@ public class ConnectionController {
         return connectionService.getConnection(firstUser, secondUser);
     }
 
-    @PostMapping("add-friend")
+    @PostMapping("add-friend/{firstUser}/{secondUser}")
     @WmtSecurityMapping(path = "connection.add-friend")
-    public Mono<ResponseMessage<String>> addFriend(@RequestBody ConnectionRequest request){
-        return connectionService.addFriend(request.id(), request.userId())
+    public Mono<ResponseMessage<String>> addFriend(@PathVariable Long firstUser,
+                                                   @PathVariable Long secondUser){
+        return connectionService.addFriend(firstUser, secondUser)
                 .flatMap(r -> Mono.just(new ResponseMessage<>("Friend request sent successfully")));
     }
 
-    @PostMapping("accept-friend")
+    @PostMapping("accept-friend/{firstUser}/{secondUser}")
     @WmtSecurityMapping(path = "connection.accept-friend")
-    public Mono<ResponseMessage<String>> acceptFriend(@RequestBody ConnectionRequest request){
-        return connectionService.acceptFriend(request.id(), request.userId())
+    public Mono<ResponseMessage<String>> acceptFriend(@PathVariable Long firstUser,
+                                                      @PathVariable Long secondUser){
+        return connectionService.acceptFriend(firstUser, secondUser)
                 .flatMap(r -> Mono.just(new ResponseMessage<>("Now you are friends")));
     }
 
-    @PostMapping("remove-friend")
+    @PostMapping("remove-friend/{firstUser}/{secondUser}")
     @WmtSecurityMapping(path = "connection.remove-friend")
-    public Mono<ResponseMessage<String>> removeFriend(@RequestBody ConnectionRequest request){
-        return connectionService.removeFriend(request.id(), request.userId())
+    public Mono<ResponseMessage<String>> removeFriend(@PathVariable Long firstUser,
+                                                      @PathVariable Long secondUser){
+        return connectionService.removeFriend(firstUser, secondUser)
                 .flatMap(r -> Mono.just(new ResponseMessage<>("Friend removed successfully")));
     }
 
-    @PostMapping("block-user")
+    @PostMapping("block-user/{firstUser}/{secondUser}")
     @WmtSecurityMapping(path = "connection.block-user")
-    public Mono<ResponseMessage<String>> blockUser(@RequestBody ConnectionRequest request){
-        return connectionService.blockUser(request.id(), request.userId())
+    public Mono<ResponseMessage<String>> blockUser(@PathVariable Long firstUser,
+                                                   @PathVariable Long secondUser){
+        return connectionService.blockUser(firstUser, secondUser)
                 .flatMap(r -> Mono.just(new ResponseMessage<>("User blocked successfully")));
     }
 
-    @PostMapping("unblock-user")
+    @PostMapping("unblock-user/{firstUser}/{secondUser}")
     @WmtSecurityMapping(path = "connection.unblock-user")
-    public Mono<ResponseMessage<String>> unblockUser(@RequestBody ConnectionRequest request){
-        return connectionService.unblockUser(request.id(), request.userId())
+    public Mono<ResponseMessage<String>> unblockUser(@PathVariable Long firstUser,
+                                                     @PathVariable Long secondUser){
+        return connectionService.unblockUser(firstUser, secondUser)
                 .flatMap(r -> Mono.just(new ResponseMessage<>("User unblocked successfully")));
     }
 }

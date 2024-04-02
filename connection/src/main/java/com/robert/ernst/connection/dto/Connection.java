@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-@Document
+@Document(collection = "connection")
 @AllArgsConstructor
 @NoArgsConstructor
 public class Connection {

@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8082
   error:
     include-message: always
     include-binding-errors: always
@@ -15,6 +15,7 @@ security:
 
 spring:
   data:
-    db-name: "socialmedia"
     mongodb:
-      uri: "mongodb://ssmongo:ssmongo2022@localhost:27017/${spring.data.db-name}"
+      database: socialmedia
+      host: localhost
+      port: 27017

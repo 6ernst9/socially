@@ -30,20 +30,27 @@ public class MessagingController {
         return messagingService.readMessage(id);
     }
 
+    @PostMapping("send-snap")
+    @WmtSecurityMapping(path = "messaging.send-snap")
+    public Mono<String> sendSnap(@RequestBody MessageRequest message) {
+        return messagingService.sendMessage(message)
+                .then(Mono.just("Snap sent successfully"));
+    }
+
     @GetMapping("get-conversations/{id}")
-    @WmtSecurityMapping(path = "messaging.getConversations")
+    @WmtSecurityMapping(path = "messaging.get-conversations")
     public Flux<Message> getConversations(@PathVariable Long id) {
         return messagingService.getConversations(id);
     }
 
     @GetMapping("get-chats/{sender}/{receiver}")
-    @WmtSecurityMapping(path = "messaging.getChats")
+    @WmtSecurityMapping(path = "messaging.get-chats")
     public Flux<Message> getChatsWith(@PathVariable Long sender, @PathVariable Long receiver){
         return messagingService.getChats(sender, receiver);
     }
 
     @DeleteMapping("delete-conversation/{id}/{partner}")
-    @WmtSecurityMapping(path = "messaging.deleteConversation")
+    @WmtSecurityMapping(path = "messaging.delete-conversation")
     public Mono<String> deleteConversation(@PathVariable Long id, @PathVariable Long partner) {
         return messagingService.deleteConversation(id, partner);
     }

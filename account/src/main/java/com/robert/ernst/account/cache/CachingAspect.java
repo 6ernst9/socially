@@ -78,7 +78,7 @@ public class CachingAspect {
     }
 
     private Object cacheUsername(ProceedingJoinPoint joinPoint) throws Throwable {
-        String username = (String)joinPoint.getArgs()[0];
+        var username = (String)joinPoint.getArgs()[0];
         var key = USERNAME_KEY + username;
 
         var entry = cache.get(key);

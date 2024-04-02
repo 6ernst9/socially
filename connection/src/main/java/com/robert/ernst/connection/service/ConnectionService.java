@@ -19,8 +19,11 @@ public class ConnectionService {
     @CacheableEvict(method = "requested")
     public Mono<Connection> addFriend(Long id, Long userId){
         return connectionRepository.findById(userId)
+                .switchIfEmpty(connectionRepository.save(new Connection(1L)))
                 .flatMap(connection -> {
-                    connection.getRequests().add(id);
+                    var requests = connection.getRequests();
+                    requests.add(id);
+                    connection.setRequests(requests);
                     return connectionRepository.save(connection);
                 });
     }
@@ -69,6 +72,7 @@ public class ConnectionService {
     @CacheableEvict(method = "blocked")
     public Mono<Connection> blockUser(Long id, Long userId){
         return removeFriend(id, userId)
+                .switchIfEmpty(connectionRepository.save(new Connection(1L)))
                 .then(connectionRepository.findById(id)
                         .flatMap(connection -> {
                             connection.getBlocked().add(userId);

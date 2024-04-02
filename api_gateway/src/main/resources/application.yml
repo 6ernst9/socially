@@ -43,7 +43,7 @@ backend:
       base-url: http://localhost:8081/
     - name: messaging
       base-url: http://localhost:8082/api/v1
-    - name: connections
+    - name: connection
       base-url: http://localhost:8083/api/v1
     - name: notifications
       base-url: http://localhost:8084/api/v1

@@ -29,6 +29,7 @@ public class CachingAspect {
             case "friends" -> cache(joinPoint, FRIENDS_KEY);
             case "blocked" -> cache(joinPoint, BLOCKED_KEY);
             case "connection" -> cacheConnection(joinPoint);
+            default -> null;
         };
     }
 
@@ -81,8 +82,8 @@ public class CachingAspect {
 
 
     private void acceptEvict(ProceedingJoinPoint joinPoint){
-        Long id = (Long)joinPoint.getArgs()[0];
-        Long userId = (Long)joinPoint.getArgs()[1];
+        var id = (Long)joinPoint.getArgs()[0];
+        var userId = (Long)joinPoint.getArgs()[1];
 
         cache.forEach((key, value) -> {
             if(key.equals(FRIENDS_KEY + id)
@@ -96,8 +97,8 @@ public class CachingAspect {
     }
 
     private void requestEvict(ProceedingJoinPoint joinPoint) {
-        Long id = (Long)joinPoint.getArgs()[0];
-        Long userId = (Long)joinPoint.getArgs()[1];
+        var id = (Long)joinPoint.getArgs()[0];
+        var userId = (Long)joinPoint.getArgs()[1];
 
         cache.forEach((key, value) -> {
             if(key.equals(REQUESTS_KEY + userId)
@@ -109,8 +110,8 @@ public class CachingAspect {
     }
 
     private void blockEvict(ProceedingJoinPoint joinPoint) {
-        Long id = (Long)joinPoint.getArgs()[0];
-        Long userId = (Long)joinPoint.getArgs()[1];
+        var id = (Long)joinPoint.getArgs()[0];
+        var userId = (Long)joinPoint.getArgs()[1];
 
         cache.forEach((key, value) -> {
             if(key.equals(FRIENDS_KEY + id)
@@ -124,8 +125,8 @@ public class CachingAspect {
     }
 
     private void removeEvict(ProceedingJoinPoint joinPoint){
-        Long id = (Long)joinPoint.getArgs()[0];
-        Long userId = (Long)joinPoint.getArgs()[1];
+        var id = (Long)joinPoint.getArgs()[0];
+        var userId = (Long)joinPoint.getArgs()[1];
 
         cache.forEach((key, value) -> {
             if(key.equals(FRIENDS_KEY + id)

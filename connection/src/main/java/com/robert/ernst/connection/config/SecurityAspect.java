@@ -35,7 +35,7 @@ public class SecurityAspect {
             throw new SecurityException("Invalid clientId or secret");
         }
 
-        if(authorization.startsWith("Bearer") || token.length() < 120) {
+        if(!authorization.startsWith("Bearer") || token.length() < 120) {
             throw new SecurityException("Invalid authorization");
         }
 
