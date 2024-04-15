@@ -1,0 +1,21 @@
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+
+test:
+  headers:
+    site-id: COM
+    ip-address: '127.0.0'
+    device: mobile
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaGSh23zOl21k4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ'
+
+security:
+  client-id: uuidgen
+  client-secret: "Oasz/0+zo6oCnBDIMzhgmxcuhWN5NLkY36MEvrldxk4lyN7aab9D+kyGGZAfeq0iRSoV20bo6mIIgs27nRjLJFukqnOrJzwgRSB1rhy5ZiPXl84R3eoZmt4RS3UZRl7H"
+
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/socialmedia
+    username: postgres
+    password: sspostgres2022

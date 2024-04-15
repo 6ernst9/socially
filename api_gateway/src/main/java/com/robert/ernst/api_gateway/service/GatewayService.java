@@ -2,6 +2,7 @@ package com.robert.ernst.api_gateway.service;
 
 import com.robert.ernst.api_gateway.configuration.microservices.MicroserviceFactory;
 import com.robert.ernst.api_gateway.configuration.SecurityProperties;
+import com.robert.ernst.api_gateway.dto.RequestContext;
 import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -18,25 +22,18 @@ public class GatewayService {
     private final WebClient webClient;
     private final MicroserviceFactory microserviceFactory;
     private final SecurityProperties securityProperties;
-    private final String siteId = "COM";
-    private final String ipAddress = "127.0.0";
-    private final String device = "mobile";
-    private final String AUTHORIZATION_HEADER = "Bearer %s";
-    private final String token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaGSh23zOl21k4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ";
 
     @Timed(value = "backend.request")
     public Mono<Object> get(String path){
-        var url = microserviceFactory.getUrl(path);
+        var headers = RequestContext.getHeaders();
+        var url = microserviceFactory.getUrl(URLDecoder.decode(path, StandardCharsets.UTF_8));
 
         var webRequest = webClient.get()
                 .uri(url)
+                .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                 .header("clientId", securityProperties.getClientId())
                 .header("clientSecret", securityProperties.getClientSecret())
                 .header("X-FI-SY-PATH", path)
-                .header("X-FI-SY-DEVICE", device)
-                .header("X-FI-SY-IP", ipAddress)
-                .header("X-FI-SY-SITE-ID", siteId)
-                .header("Authorization",  AUTHORIZATION_HEADER.formatted(token))
                 .accept(MediaType.APPLICATION_JSON);
 
         return handleResponse(webRequest);
@@ -44,17 +41,15 @@ public class GatewayService {
 
     @Timed(value = "backend.request")
     public Mono<Object> post(String path, Object body){
+        var headers = RequestContext.getHeaders();
         var url = microserviceFactory.getUrl(path);
 
         var webRequest = webClient.post()
                 .uri(url)
+                .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                 .header("clientId", securityProperties.getClientId())
                 .header("clientSecret", securityProperties.getClientSecret())
                 .header("X-FI-SY-PATH", path)
-                .header("X-FI-SY-DEVICE", device)
-                .header("X-FI-SY-IP", ipAddress)
-                .header("X-FI-SY-SITE-ID", siteId)
-                .header("Authorization",  AUTHORIZATION_HEADER.formatted(token))
                 .body(Mono.just(body), Object.class)
                 .accept(MediaType.APPLICATION_JSON);
 
@@ -63,17 +58,15 @@ public class GatewayService {
 
     @Timed(value = "backend.request")
     public Mono<Object> update(String path, Object body){
+        var headers = RequestContext.getHeaders();
         var url = microserviceFactory.getUrl(path);
 
         var webRequest = webClient.put()
                 .uri(url)
+                .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                 .header("clientId", securityProperties.getClientId())
                 .header("clientSecret", securityProperties.getClientSecret())
                 .header("X-FI-SY-PATH", path)
-                .header("X-FI-SY-DEVICE", device)
-                .header("X-FI-SY-IP", ipAddress)
-                .header("X-FI-SY-SITE-ID", siteId)
-                .header("Authorization",  AUTHORIZATION_HEADER.formatted(token))
                 .body(Mono.just(body), Object.class)
                 .accept(MediaType.APPLICATION_JSON);
 
@@ -82,17 +75,15 @@ public class GatewayService {
 
     @Timed(value = "backend.request")
     public Mono<Object> delete(String path){
+        var headers = RequestContext.getHeaders();
         var url = microserviceFactory.getUrl(path);
 
         var webRequest = webClient.delete()
                 .uri(url)
+                .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                 .header("clientId", securityProperties.getClientId())
                 .header("clientSecret", securityProperties.getClientSecret())
                 .header("X-FI-SY-PATH", path)
-                .header("X-FI-SY-DEVICE", device)
-                .header("X-FI-SY-IP", ipAddress)
-                .header("X-FI-SY-SITE-ID", siteId)
-                .header("Authorization",  AUTHORIZATION_HEADER.formatted(token))
                 .accept(MediaType.APPLICATION_JSON);
 
         return handleResponse(webRequest);

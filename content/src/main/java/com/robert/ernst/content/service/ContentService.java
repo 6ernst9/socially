@@ -4,19 +4,36 @@ import com.robert.ernst.content.cache.annotations.CacheableEvict;
 import com.robert.ernst.content.cache.annotations.CacheableReactive;
 import com.robert.ernst.content.dto.Content;
 import com.robert.ernst.content.dto.ContentDto;
+import com.robert.ernst.content.dto.RequestContext;
 import com.robert.ernst.content.dto.SnapDto;
 import com.robert.ernst.content.repository.ContentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ContentService {
     private final ContentRepository contentRepository;
+    private final WebClient webClient;
+    @Value("${connection.base-url}")
+    private final String connectionBaseUrl;
+    @Value("${security.client-id}")
+    private String clientId;
+    @Value("${security.client-secret}")
+    private String clientSecret;
+
 
     @CacheableReactive(key = "snaps")
     public Flux<SnapDto> getSnaps(Long userId){
@@ -56,13 +73,16 @@ public class ContentService {
     }
 
     @CacheableEvict(method = "addSnap")
-    public Mono<Content> sendSnap(ContentDto content){
-        return contentRepository.save(
+    public Mono<Content> sendSnap(ContentDto snap){
+        var content = contentRepository.save(
                 new Content(
-                        content.type(),
-                        content.url(),
-                        content.posterId(),
-                        content.receivers()));
+                        snap.type(),
+                        snap.url(),
+                        snap.posterId(),
+                        snap.receivers()));
+
+        snap.receivers().forEach(receiver -> updateStreak(snap.posterId(), receiver));
+        return content;
     }
 
     @CacheableEvict(method = "addStory")
@@ -94,5 +114,47 @@ public class ContentService {
     @CacheableEvict(method = "deleteStory")
     public Mono<Void> deleteStory(Long id){
         return contentRepository.deleteById(id);
+    }
+
+    private void updateStreak(Long sender, Long receiver) {
+        var todayStart = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+        var todayEnd = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+
+        var snapsFromSender = contentRepository.findSnapsBetweenUsersOnSameDay(sender, receiver, todayStart, todayEnd);
+        var snapsFromReceiver = contentRepository.findSnapsBetweenUsersOnSameDay(receiver, sender, todayStart, todayEnd);
+
+        Flux.merge(snapsFromSender, snapsFromReceiver)
+                .collectList()
+                .doOnNext(list -> {
+                    if(!list.isEmpty()){
+                        makeRequest(sender, receiver);
+                    }
+                })
+                .subscribe();
+    }
+
+    private void makeRequest(Long sender, Long receiver) {
+        var headers = RequestContext.getHeaders();
+
+        var webRequest = webClient.post()
+                .uri(connectionBaseUrl.formatted(sender, receiver))
+                .headers(httpHeaders -> headers.forEach(httpHeaders::set))
+                .header("clientId",clientId)
+                .header("clientSecret", clientSecret)
+                .header("X-FI-SY-PATH", "connection.update-snapstreak")
+                .accept(MediaType.APPLICATION_JSON);
+
+        webRequest.exchangeToMono(response -> {
+            if (response.statusCode() == HttpStatus.OK) {
+                log.info("Snapstreak updated successfully for users: {}, {}", sender, receiver);
+                return Mono.empty();
+            } else {
+                return response.bodyToMono(Object.class)
+                        .flatMap(err -> {
+                            log.error("Request failed: {}", err);
+                            return Mono.error(new RuntimeException("Request failed:" + err));
+                        });
+            }
+        }).subscribe();
     }
 }

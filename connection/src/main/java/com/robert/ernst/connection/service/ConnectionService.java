@@ -11,15 +11,30 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
+
 @Service
 @RequiredArgsConstructor
 public class ConnectionService {
     private final ConnectionRepository connectionRepository;
 
+    public Mono<Connection> addConnection(Long id){
+        return connectionRepository.save(new Connection(id));
+    }
+
+    public Mono<Integer> getSnapstreak(Long sender, Long receiver){
+        return connectionRepository.findById(sender)
+                .map(connection -> connection.getStreak()
+                        .stream()
+                        .filter(streak -> !streak.getId().equals(receiver))
+                        .toList()
+                        .get(0)
+                        .getStreak());
+    }
+
     @CacheableEvict(method = "requested")
     public Mono<Connection> addFriend(Long id, Long userId){
         return connectionRepository.findById(userId)
-                .switchIfEmpty(connectionRepository.save(new Connection(1L)))
                 .flatMap(connection -> {
                     var requests = connection.getRequests();
                     requests.add(id);
@@ -72,7 +87,6 @@ public class ConnectionService {
     @CacheableEvict(method = "blocked")
     public Mono<Connection> blockUser(Long id, Long userId){
         return removeFriend(id, userId)
-                .switchIfEmpty(connectionRepository.save(new Connection(1L)))
                 .then(connectionRepository.findById(id)
                         .flatMap(connection -> {
                             connection.getBlocked().add(userId);
@@ -140,5 +154,38 @@ public class ConnectionService {
     public Flux<Long> getAllBlocked(Long id) {
         return connectionRepository.findById(id)
                 .flatMapMany(connection -> Flux.fromIterable(connection.getBlocked()));
+    }
+
+    public Mono<String> updateStreak(Long sender, Long receiver) {
+        return connectionRepository.findById(sender)
+                .flatMap(connection -> {
+                    var streak = connection.getStreak()
+                            .stream()
+                            .peek(str -> {
+                                if(str.getId().equals(receiver) && !str.getLastDay().equals(LocalDate.now())){
+                                    str.setStreak(str.getStreak()+1);
+                                    str.setLastDay(LocalDate.now());
+                                }
+                            })
+                            .toList();
+
+                    connection.setStreak(streak);
+                    return connectionRepository.save(connection);
+                }).then(connectionRepository.findById(receiver)
+                        .flatMap(connection -> {
+                            var streak = connection.getStreak()
+                                    .stream()
+                                    .peek(str -> {
+                                        if (str.getId().equals(sender) && !str.getLastDay().equals(LocalDate.now())) {
+                                            str.setStreak(str.getStreak() + 1);
+                                            str.setLastDay(LocalDate.now());
+                                        }
+                                    })
+                                    .toList();
+                            connection.setStreak(streak);
+                            return connectionRepository.save(connection);
+                        })
+                ).then(Mono.just("Snapstreak updated successfully"))
+                .doOnError(err -> Mono.error(new RuntimeException(err)));
     }
 }

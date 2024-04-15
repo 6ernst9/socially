@@ -17,10 +17,29 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class ConnectionController {
     private final ConnectionService connectionService;
+
+    @PostMapping("add-connection/{id}")
+    @WmtSecurityMapping(path = "connection.add-connection")
+    public Mono<Void> addConnection(@PathVariable Long id){
+        return connectionService.addConnection(id).then(Mono.empty());
+    }
+
+    @PostMapping("update-snapstreak/{sender}/{receiver}")
+    @WmtSecurityMapping(path = "connection.update-snapstreak")
+    public Mono<String> updateStreak(@PathVariable Long sender, @PathVariable Long receiver){
+        return connectionService.updateStreak(sender, receiver);
+    }
+
     @GetMapping("get-friends/{id}")
     @WmtSecurityMapping(path = "connection.get-friends")
     public Flux<User> getAllFriends(@PathVariable Long id){
         return connectionService.getAllFriends(id);
+    }
+
+    @GetMapping("get-snapstreak/{sender}/{receiver}")
+    @WmtSecurityMapping(path = "connection.get-snapstreak")
+    public Mono<Integer> getSnapstreak(@PathVariable Long sender, @PathVariable Long receiver){
+        return connectionService.getSnapstreak(sender, receiver);
     }
 
     @GetMapping("get-requests/{id}")
@@ -36,7 +55,7 @@ public class ConnectionController {
     }
 
     @GetMapping("get-connection/{firstUser}/{secondUser}")
-    @WmtSecurityMapping(path = "connection.getConnection")
+    @WmtSecurityMapping(path = "connection.get-connection")
     public Mono<ConnectionType> getConnection(@PathVariable Long firstUser,
                                               @PathVariable Long secondUser){
         return connectionService.getConnection(firstUser, secondUser);

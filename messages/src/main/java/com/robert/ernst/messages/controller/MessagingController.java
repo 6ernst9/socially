@@ -30,13 +30,6 @@ public class MessagingController {
         return messagingService.readMessage(id);
     }
 
-    @PostMapping("send-snap")
-    @WmtSecurityMapping(path = "messaging.send-snap")
-    public Mono<String> sendSnap(@RequestBody MessageRequest message) {
-        return messagingService.sendMessage(message)
-                .then(Mono.just("Snap sent successfully"));
-    }
-
     @GetMapping("get-conversations/{id}")
     @WmtSecurityMapping(path = "messaging.get-conversations")
     public Flux<Message> getConversations(@PathVariable Long id) {

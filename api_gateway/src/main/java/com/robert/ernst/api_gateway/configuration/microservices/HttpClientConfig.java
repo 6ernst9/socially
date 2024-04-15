@@ -1,4 +1,4 @@
-package com.robert.ernst.api_gateway.configuration;
+package com.robert.ernst.api_gateway.configuration.microservices;
 
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;

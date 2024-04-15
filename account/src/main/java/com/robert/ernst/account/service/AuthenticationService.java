@@ -19,7 +19,7 @@ public class AuthenticationService {
 
     public Mono<String> login(@NonNull LoginParams loginParams){
         return mapLoginParamsToAccount(loginParams).flatMap(account -> {
-            if (encoder.matches(loginParams.password(), account.getPassword())) {
+            if (loginParams.password().equals(account.getPassword())) {
                 return Mono.just("User logged in successfully");
             }
             return Mono.error(new RuntimeException("Invalid credentials"));

@@ -23,10 +23,13 @@ public class Connection {
     private List<Long> requests;
     @NonNull
     private List<Long> blocked;
+    @NonNull
+    private List<Streak> streak;
     public Connection(@NonNull Long id){
         this.id = id;
         this.friends = new ArrayList<>();
         this.requests = new ArrayList<>();
         this.blocked = new ArrayList<>();
+        this.streak = new ArrayList<>();
     }
 }
