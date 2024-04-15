@@ -17,10 +17,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @Aspect
 @Component
 public class CachingAspect {
-    private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
-    private final String ID_KEY = "id:";
-    private final String USERNAME_KEY = "username:";
-    private final String TERM_KEY = "term:";
+    private final Map<String, CacheEntry> termCache = new ConcurrentHashMap<>();
+    private final Map<String, CacheEntry> usernameCache = new ConcurrentHashMap<>();
+    private final Map<String, CacheEntry> idCache = new ConcurrentHashMap<>();
+    private final String ID_KEY = "accounts:id:";
+    private final String USERNAME_KEY = "accounts:username:";
+    private final String TERM_KEY = "accounts:term:";
 
     @Around("@annotation(caching)")
     public Object cache(ProceedingJoinPoint joinPoint, CacheableReactive caching) throws Throwable {
@@ -47,7 +49,7 @@ public class CachingAspect {
         var term = (String)joinPoint.getArgs()[0];
         var key = TERM_KEY + term;
 
-        var entry = cache.get(key);
+        var entry = termCache.get(key);
 
         if(entry!=null && !entry.isExpired()){
             return Flux.fromIterable((Iterable<?>)entry.getValue());
@@ -55,7 +57,7 @@ public class CachingAspect {
             var result = (Flux<?>)joinPoint.proceed();
             var results = result.toIterable();
 
-            cache.put(key, new CacheEntry(results));
+            termCache.put(key, new CacheEntry(results));
             return result;
         }
     }
@@ -64,7 +66,7 @@ public class CachingAspect {
         var id = (Long)joinPoint.getArgs()[0];
         var key = ID_KEY + id;
 
-        var entry = cache.get(key);
+        var entry = idCache.get(key);
 
         if(entry!=null && !entry.isExpired()){
             return Mono.just(entry.getValue());
@@ -72,7 +74,7 @@ public class CachingAspect {
             var result = (Mono<?>)joinPoint.proceed();
             var account = result.block();
 
-            cache.put(key, new CacheEntry(account));
+            idCache.put(key, new CacheEntry(account));
             return result;
         }
     }
@@ -81,7 +83,7 @@ public class CachingAspect {
         var username = (String)joinPoint.getArgs()[0];
         var key = USERNAME_KEY + username;
 
-        var entry = cache.get(key);
+        var entry = usernameCache.get(key);
 
         if(entry!=null && !entry.isExpired()){
             return Mono.just(entry.getValue());
@@ -89,31 +91,27 @@ public class CachingAspect {
             var result = (Mono<?>)joinPoint.proceed();
             var account = result.block();
 
-            cache.put(key, new CacheEntry(account));
+            usernameCache.put(key, new CacheEntry(account));
             return result;
         }
     }
 
     private void updateEvict(ProceedingJoinPoint joinPoint){
         var account = (Account)joinPoint.getArgs()[0];
-        cache.remove(ID_KEY + account.getId());
-        cache.remove(USERNAME_KEY + account.getUsername());
+        idCache.remove(ID_KEY + account.getId());
+        usernameCache.remove(USERNAME_KEY + account.getUsername());
 
-        cache.forEach((key, value) -> {
+        termCache.forEach((key, value) -> {
             if (key.contains(TERM_KEY)) {
-                cache.remove(key);
+                termCache.remove(key);
             }
         });
     }
 
     private void deleteEvict(ProceedingJoinPoint joinPoint){
         var id = (Long)joinPoint.getArgs()[1];
-        cache.remove(ID_KEY + id);
-
-        cache.forEach((key, value) -> {
-            if (key.contains(USERNAME_KEY) || key.contains(TERM_KEY)) {
-                cache.remove(key);
-            }
-        });
+        idCache.remove(ID_KEY + id);
+        usernameCache.clear();
+        termCache.clear();
     }
 }

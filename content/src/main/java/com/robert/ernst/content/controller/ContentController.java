@@ -3,7 +3,6 @@ package com.robert.ernst.content.controller;
 import com.robert.ernst.content.config.annotations.WmtSecurityMapping;
 import com.robert.ernst.content.dto.Content;
 import com.robert.ernst.content.dto.ContentDto;
-import com.robert.ernst.content.dto.SnapDto;
 import com.robert.ernst.content.service.ContentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +19,7 @@ public class ContentController {
 
     @GetMapping("get-snaps/{userId}")
     @WmtSecurityMapping(path = "content.get-snaps")
-    public Flux<SnapDto> getSnaps(@PathVariable Long userId){
+    public Flux<Content> getSnaps(@PathVariable Long userId){
         log.info("Received GET snaps request for userId: {}", userId);
         return contentService.getSnaps(userId);
     }
@@ -61,7 +60,7 @@ public class ContentController {
     @WmtSecurityMapping(path = "content.open-story")
     public Mono<Void> openStory(@PathVariable Long userId, @PathVariable Long id){
         log.info("Received POST (open story) request for userId: {}, and story id: {}", userId, id);
-        return contentService.openStory(userId, id)
+        return contentService.openStory(id, userId)
                 .then(Mono.empty());
     }
 

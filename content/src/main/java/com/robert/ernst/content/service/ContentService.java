@@ -5,7 +5,6 @@ import com.robert.ernst.content.cache.annotations.CacheableReactive;
 import com.robert.ernst.content.dto.Content;
 import com.robert.ernst.content.dto.ContentDto;
 import com.robert.ernst.content.dto.RequestContext;
-import com.robert.ernst.content.dto.SnapDto;
 import com.robert.ernst.content.repository.ContentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,14 +33,12 @@ public class ContentService {
     @Value("${security.client-secret}")
     private String clientSecret;
 
-
     @CacheableReactive(key = "snaps")
-    public Flux<SnapDto> getSnaps(Long userId){
-        return contentRepository.getSnapsByUserId(userId)
-                .map(snap -> new SnapDto(snap.getPosterId(), snap.getId()));
+    public Flux<Content> getSnaps(Long userId){
+        return contentRepository.getSnapsByUserId(userId);
     }
 
-    @CacheableReactive(key = "snap")
+    @CacheableEvict(method = "openSnap")
     public Mono<Content> openSnap(Long id, Long userId){
         return contentRepository.findById(id)
                 .flatMap(snap -> {
@@ -53,7 +50,7 @@ public class ContentService {
                 .switchIfEmpty(Mono.error(new RuntimeException("Snap not found")));
     }
 
-    @CacheableEvict(method = "updateStories")
+    @CacheableEvict(method = "openSnap")
     public Mono<Content> dismissSnap(Long id, Long userId, boolean reload){
         if(reload){
             //TODO handle reloading notification
@@ -100,8 +97,8 @@ public class ContentService {
         return contentRepository.getStoriesByUserId(userId);
     }
 
-    @CacheableEvict(method = "updateStory")
-    public Mono<Content> openStory(Long userId, Long id){
+    @CacheableEvict(method = "openStory")
+    public Mono<Content> openStory(Long id,Long userId){
         return contentRepository.findById(id)
                 .flatMap(story -> {
                     var seen = story.getSeen();
@@ -112,8 +109,9 @@ public class ContentService {
     }
 
     @CacheableEvict(method = "deleteStory")
-    public Mono<Void> deleteStory(Long id){
-        return contentRepository.deleteById(id);
+    public Mono<Content> deleteStory(Long id){
+        var story = contentRepository.findById(id);
+        return contentRepository.deleteById(id).then(story);
     }
 
     private void updateStreak(Long sender, Long receiver) {

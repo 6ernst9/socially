@@ -18,9 +18,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Aspect
 @Component
 public class CachingAspect {
-    private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
-    private final String CONVERSATION_KEY = "conversation:";
-    private final String CHAT_KEY = "chat:%s:%s";
+    private final Map<String, CacheEntry> chatsCache = new ConcurrentHashMap<>();
+    private final Map<String, CacheEntry> conversationCache= new ConcurrentHashMap<>();
+    private final String CONVERSATION_KEY = "messaging:conversation:";
+    private final String CHAT_KEY = "messaging:chat:%s:%s";
 
     @Around("@annotation(caching)")
     public Object cache(ProceedingJoinPoint joinPoint, CacheableReactive caching) throws Throwable {
@@ -48,7 +49,7 @@ public class CachingAspect {
         var id = (Long)joinPoint.getArgs()[0];
         var key = CONVERSATION_KEY + id;
 
-        var entry = cache.get(key);
+        var entry = conversationCache.get(key);
 
         if(entry!=null && !entry.isExpired()){
             return Flux.fromIterable((Iterable<?>)entry.getValue());
@@ -56,7 +57,7 @@ public class CachingAspect {
             var result = (Flux<?>)joinPoint.proceed();
             var conversation = result.toIterable();
 
-            cache.put(key, new CacheEntry(conversation));
+            conversationCache.put(key, new CacheEntry(conversation));
             return result;
         }
     }
@@ -66,7 +67,7 @@ public class CachingAspect {
         var receiverId = (Long)joinPoint.getArgs()[1];
         var key = CHAT_KEY.formatted(senderId, receiverId);
 
-        var entry = cache.get(key);
+        var entry = chatsCache.get(key);
 
         if(entry!=null && !entry.isExpired()){
             return Flux.fromIterable((Iterable<?>)entry.getValue());
@@ -74,7 +75,7 @@ public class CachingAspect {
             var result = (Flux<?>)joinPoint.proceed();
             var chat = result.toIterable();
 
-            cache.put(key, new CacheEntry(chat));
+            chatsCache.put(key, new CacheEntry(chat));
             return result;
         }
     }
@@ -107,7 +108,8 @@ public class CachingAspect {
 
 
     private void removeCache(Long senderId, Long receiverId) {
-        cache.remove(CHAT_KEY.formatted(senderId, receiverId));
-        cache.remove(CONVERSATION_KEY + senderId);
+        chatsCache.remove(CHAT_KEY.formatted(senderId, receiverId));
+        conversationCache.remove(CONVERSATION_KEY + senderId);
+        conversationCache.remove(CONVERSATION_KEY + receiverId);
     }
 }

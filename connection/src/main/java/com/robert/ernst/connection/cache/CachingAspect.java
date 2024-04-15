@@ -16,19 +16,25 @@ import java.util.concurrent.ConcurrentHashMap;
 @Aspect
 @Component
 public class CachingAspect {
-    private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
-    private final String FRIENDS_KEY = "friends:";
-    private final String BLOCKED_KEY = "blocked:";
-    private final String REQUESTS_KEY = "requests:";
-    private final String CONNECTION_KEY = "connection:%s:%s";
+    private final Map<String, CacheEntry> friendsCache = new ConcurrentHashMap<>();
+    private final Map<String, CacheEntry> blockedCache = new ConcurrentHashMap<>();
+    private final Map<String, CacheEntry> requestsCache = new ConcurrentHashMap<>();
+    private final Map<String, CacheEntry> connectionCache = new ConcurrentHashMap<>();
+    private final Map<String, CacheEntry> snapstreakCache = new ConcurrentHashMap<>();
+    private final String FRIENDS_KEY = "connection:friends:";
+    private final String BLOCKED_KEY = "connection:blocked:";
+    private final String REQUESTS_KEY = "connection:requests:";
+    private final String CONNECTION_KEY = "connection:connection:%s:%s";
+    private final String SNAPSTREAK_KEY = "connection:snapstreak:%s:%s";
 
     @Around("@annotation(caching)")
     public Object cache(ProceedingJoinPoint joinPoint, CacheableReactive caching) throws Throwable {
         return switch (caching.key()) {
-            case "requests" -> cache(joinPoint, REQUESTS_KEY);
-            case "friends" -> cache(joinPoint, FRIENDS_KEY);
-            case "blocked" -> cache(joinPoint, BLOCKED_KEY);
-            case "connection" -> cacheConnection(joinPoint);
+            case "requests" -> cache(joinPoint, requestsCache, REQUESTS_KEY);
+            case "friends" -> cache(joinPoint, friendsCache, FRIENDS_KEY);
+            case "blocked" -> cache(joinPoint, blockedCache, BLOCKED_KEY);
+            case "connection" -> cacheConnection(joinPoint, connectionCache, CONNECTION_KEY);
+            case "snapstreak" -> cacheConnection(joinPoint, snapstreakCache, SNAPSTREAK_KEY);
             default -> null;
         };
     }
@@ -40,11 +46,13 @@ public class CachingAspect {
             case "requested" -> requestEvict(joinPoint);
             case "removed" -> removeEvict(joinPoint);
             case "blocked" -> blockEvict(joinPoint);
+            case "unblocked" -> unblockEvict(joinPoint);
+            case "updated" -> snapstreakEvict(joinPoint);
         }
         return joinPoint.proceed();
     }
 
-    private Object cache(ProceedingJoinPoint joinPoint, String key) throws Throwable {
+    private Object cache(ProceedingJoinPoint joinPoint, Map<String, CacheEntry> cache, String key) throws Throwable {
         var id = (Long)joinPoint.getArgs()[0];
         var set = key + id;
 
@@ -61,11 +69,11 @@ public class CachingAspect {
         }
     }
 
-    private Object cacheConnection(ProceedingJoinPoint joinPoint) throws Throwable {
+    private Object cacheConnection(ProceedingJoinPoint joinPoint, Map<String, CacheEntry> cache, String key) throws Throwable {
         var id = (Long)joinPoint.getArgs()[0];
         var userId = (Long)joinPoint.getArgs()[1];
 
-        var key = CONNECTION_KEY.formatted(id, userId);
+        var set = key.formatted(id, userId);
         var entry = cache.get(key);
 
         if(entry!=null && !entry.isExpired()){
@@ -79,62 +87,68 @@ public class CachingAspect {
         }
     }
 
-
-
     private void acceptEvict(ProceedingJoinPoint joinPoint){
         var id = (Long)joinPoint.getArgs()[0];
         var userId = (Long)joinPoint.getArgs()[1];
 
-        cache.forEach((key, value) -> {
-            if(key.equals(FRIENDS_KEY + id)
-                    || key.equals(FRIENDS_KEY + userId)
-                    || key.equals(REQUESTS_KEY + userId)
-                    || key.equals(CONNECTION_KEY.formatted(id, userId))
-                    || key.equals(CONNECTION_KEY.formatted(userId, id))){
-                cache.remove(key);
-            }
-        });
+        friendsCache.remove(FRIENDS_KEY + id);
+        friendsCache.remove(FRIENDS_KEY + userId);
+
+        requestsCache.remove(REQUESTS_KEY + userId);
+
+        connectionCache.remove(CONNECTION_KEY.formatted(id, userId));
+        connectionCache.remove(CONNECTION_KEY.formatted(userId, id));
     }
 
     private void requestEvict(ProceedingJoinPoint joinPoint) {
         var id = (Long)joinPoint.getArgs()[0];
         var userId = (Long)joinPoint.getArgs()[1];
 
-        cache.forEach((key, value) -> {
-            if(key.equals(REQUESTS_KEY + userId)
-                    || key.equals(CONNECTION_KEY.formatted(id, userId))
-                    || key.equals(CONNECTION_KEY.formatted(userId, id))){
-                cache.remove(key);
-            }
-        });
+        requestsCache.remove(REQUESTS_KEY + userId);
+
+        connectionCache.remove(CONNECTION_KEY.formatted(id, userId));
+        connectionCache.remove(CONNECTION_KEY.formatted(userId, id));
     }
 
     private void blockEvict(ProceedingJoinPoint joinPoint) {
-        var id = (Long)joinPoint.getArgs()[0];
-        var userId = (Long)joinPoint.getArgs()[1];
+        var id = (Long) joinPoint.getArgs()[0];
+        var userId = (Long) joinPoint.getArgs()[1];
 
-        cache.forEach((key, value) -> {
-            if(key.equals(FRIENDS_KEY + id)
-                    || key.equals(FRIENDS_KEY + userId)
-                    || key.equals(BLOCKED_KEY + id)
-                    || key.equals(CONNECTION_KEY.formatted(id, userId))
-                    || key.equals(CONNECTION_KEY.formatted(userId, id))){
-                cache.remove(key);
-            }
-        });
+        friendsCache.remove(FRIENDS_KEY + id);
+        friendsCache.remove(FRIENDS_KEY + userId);
+
+        requestsCache.remove(BLOCKED_KEY + id);
+
+        connectionCache.remove(CONNECTION_KEY.formatted(id, userId));
+        connectionCache.remove(CONNECTION_KEY.formatted(userId, id));
+    }
+
+    private void unblockEvict(ProceedingJoinPoint joinPoint) {
+        var id = (Long) joinPoint.getArgs()[0];
+        var userId = (Long) joinPoint.getArgs()[1];
+
+        requestsCache.remove(BLOCKED_KEY + id);
+
+        connectionCache.remove(CONNECTION_KEY.formatted(id, userId));
+        connectionCache.remove(CONNECTION_KEY.formatted(userId, id));
     }
 
     private void removeEvict(ProceedingJoinPoint joinPoint){
         var id = (Long)joinPoint.getArgs()[0];
         var userId = (Long)joinPoint.getArgs()[1];
 
-        cache.forEach((key, value) -> {
-            if(key.equals(FRIENDS_KEY + id)
-                    || key.equals(FRIENDS_KEY + userId)
-                    || key.equals(CONNECTION_KEY.formatted(id, userId))
-                    || key.equals(CONNECTION_KEY.formatted(userId, id))){
-                cache.remove(key);
-            }
-        });
+        friendsCache.remove(FRIENDS_KEY + id);
+        friendsCache.remove(FRIENDS_KEY + userId);
+
+        connectionCache.remove(CONNECTION_KEY.formatted(id, userId));
+        connectionCache.remove(CONNECTION_KEY.formatted(userId, id));
+    }
+
+    private void snapstreakEvict(ProceedingJoinPoint joinPoint) {
+        var id = (Long)joinPoint.getArgs()[0];
+        var userId = (Long)joinPoint.getArgs()[1];
+
+        snapstreakCache.remove(SNAPSTREAK_KEY.formatted(id, userId));
+        snapstreakCache.remove(SNAPSTREAK_KEY.formatted(userId, id));
     }
 }

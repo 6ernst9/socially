@@ -22,6 +22,7 @@ public class ConnectionService {
         return connectionRepository.save(new Connection(id));
     }
 
+    @CacheableReactive(key = "snapstreak")
     public Mono<Integer> getSnapstreak(Long sender, Long receiver){
         return connectionRepository.findById(sender)
                 .map(connection -> connection.getStreak()
@@ -94,6 +95,7 @@ public class ConnectionService {
                         }));
     }
 
+    @CacheableEvict(method = "unblocked")
     public Mono<Connection> unblockUser(Long id, Long userId){
         return connectionRepository.findById(id)
                 .flatMap(connection -> {
@@ -156,6 +158,7 @@ public class ConnectionService {
                 .flatMapMany(connection -> Flux.fromIterable(connection.getBlocked()));
     }
 
+    @CacheableEvict(method = "updated")
     public Mono<String> updateStreak(Long sender, Long receiver) {
         return connectionRepository.findById(sender)
                 .flatMap(connection -> {
