@@ -1,4 +1,4 @@
-package com.robert.ernst.content.config;
+package com.robert.ernst.content.config.aspect;
 
 import com.robert.ernst.content.config.annotations.WmtSecurityMapping;
 import org.aspectj.lang.annotation.Aspect;

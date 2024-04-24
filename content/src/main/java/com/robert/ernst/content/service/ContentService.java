@@ -9,6 +9,7 @@ import com.robert.ernst.content.repository.ContentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -27,15 +29,28 @@ public class ContentService {
     private final ContentRepository contentRepository;
     private final WebClient webClient;
     @Value("${connection.base-url}")
-    private final String connectionBaseUrl;
+    private String connectionBaseUrl;
     @Value("${security.client-id}")
     private String clientId;
     @Value("${security.client-secret}")
     private String clientSecret;
 
+    private final Sort sort = Sort.by(Sort.Direction.ASC, "timestamp");
+
     @CacheableReactive(key = "snaps")
-    public Flux<Content> getSnaps(Long userId){
-        return contentRepository.getSnapsByUserId(userId);
+    public Flux<Content> getSnaps(Long id){
+        return contentRepository.getSnapsByUserId(id)
+                .map(snap -> snap.getPosterId().equals(id)
+                        ? id : snap.getPosterId())
+                .collect(Collectors.toSet())
+                .flux()
+                .flatMap(Flux::fromIterable)
+                .flatMap(partnerId -> contentRepository.getSnapsBetween(id, partnerId, sort).last());
+    }
+
+    @CacheableReactive(key = "snapsWith")
+    public Flux<Content> getSnapsWith(Long sender, Long receiver){
+        return contentRepository.getSnapsBetween(sender, receiver, sort);
     }
 
     @CacheableEvict(method = "openSnap")
@@ -61,11 +76,7 @@ public class ContentService {
                     var receivers = snap.getReceivers();
                     receivers.remove(userId);
                     snap.setReceivers(receivers);
-                    if(receivers.isEmpty()){
-                        return contentRepository.deleteById(id).then(Mono.empty());
-                    } else {
-                        return contentRepository.save(snap);
-                    }
+                    return contentRepository.save(snap);
                 });
     }
 
@@ -92,7 +103,7 @@ public class ContentService {
                         content.receivers()));
     }
 
-    @CacheableReactive(key = "stories")
+    @CacheableReactive(key = "story")
     public Flux<Content> getStories(Long userId){
         return contentRepository.getStoriesByUserId(userId);
     }

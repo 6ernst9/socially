@@ -38,6 +38,6 @@ public class Account {
         this.fullName = fullName;
         this.phoneNumber = phoneNumber;
         this.isAdmin = false;
-        this.profilePhoto = "";
+        this.profilePhoto = "https://firebasestorage.googleapis.com/v0/b/isproject-6332b.appspot.com/o/profile%2Fdefault.jpg?alt=media&token=629e8c3b-1b4a-4e43-911e-d3faa267de5d";
     }
 }

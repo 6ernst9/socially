@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 public class Content {
     @Id
-    private Long id;
+    private String id;
     @NonNull
     private String type;
     @NonNull

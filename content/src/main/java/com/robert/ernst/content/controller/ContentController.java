@@ -24,6 +24,14 @@ public class ContentController {
         return contentService.getSnaps(userId);
     }
 
+    @GetMapping("get-snaps-with/{sender}/{receiver}")
+    @WmtSecurityMapping(path = "content.get-snaps-with")
+    public Flux<Content> getSnapsWith(@PathVariable Long sender,
+                                      @PathVariable Long receiver){
+        log.info("Received GET snaps request between userId: {} and userId: {}", sender, receiver);
+        return contentService.getSnapsWith(sender, receiver);
+    }
+
     @GetMapping("open-snap/{userId}/{id}")
     @WmtSecurityMapping(path = "content.open-snap")
     public Mono<Content> openSnap(@PathVariable Long userId,

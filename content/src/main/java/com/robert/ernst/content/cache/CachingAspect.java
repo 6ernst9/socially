@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CachingAspect {
     private final Map<String, CacheEntry> storiesCache = new ConcurrentHashMap<>();
     private final Map<String, CacheEntry> snapsCache = new ConcurrentHashMap<>();
+    private final Map<String, CacheEntry> snapsWithCache = new ConcurrentHashMap<>();
     private final String STORY_KEY = "content:story:";
     private final String SNAPS_KEY = "content:snaps:";
 
@@ -26,8 +27,10 @@ public class CachingAspect {
     public Object cache(ProceedingJoinPoint joinPoint, CacheableReactive caching) throws Throwable {
         if(caching.key().equals("story"))
             return cacheStories(joinPoint);
-        else
+        else if(caching.key().equals("snaps"))
             return cacheSnaps(joinPoint);
+        else
+            return cacheSnapsWith(joinPoint);
     }
 
     @Around("@annotation(evict)")
@@ -38,12 +41,12 @@ public class CachingAspect {
             case "openStory" -> openEvict(joinPoint, false);
             case "addSnap" -> addEvict(joinPoint, true);
             case "addStory" -> addEvict(joinPoint, false);
-            case "deleteStory" -> deleteEvict(joinPoint, result);
+            case "deleteStory" -> deleteEvict(result);
         }
         return result;
     }
 
-    private void deleteEvict(ProceedingJoinPoint joinPoint, Object data) {
+    private void deleteEvict(Object data) {
         var content = (Content)data;
 
         content.getReceivers()
@@ -54,7 +57,14 @@ public class CachingAspect {
         var content = (ContentDto)joinPoint.getArgs()[0];
 
         if(isSnap)
-            content.receivers().forEach(id -> snapsCache.remove(SNAPS_KEY + id));
+            content.receivers().forEach(id -> {
+                snapsCache.remove(SNAPS_KEY + id);
+                snapsWithCache.forEach((key, value) -> {
+                    if(key.contains(id.toString())){
+                        snapsWithCache.remove(key);
+                    }
+                });
+            });
         else
             content.receivers().forEach(id -> storiesCache.remove(STORY_KEY + id));
     }
@@ -62,8 +72,14 @@ public class CachingAspect {
     private void openEvict(ProceedingJoinPoint joinPoint, boolean isSnap) {
         var id = (Long)joinPoint.getArgs()[1];
 
-        if(isSnap)
+        if(isSnap) {
             snapsCache.remove(SNAPS_KEY + id);
+            snapsWithCache.forEach((key, value) -> {
+                if (key.contains(id.toString())) {
+                    snapsWithCache.remove(key);
+                }
+            });
+        }
         else
             storiesCache.remove(STORY_KEY + id);
     }
@@ -98,6 +114,25 @@ public class CachingAspect {
             var snaps = result.toIterable();
 
             snapsCache.put(key, new CacheEntry(snaps));
+            return result;
+        }
+    }
+
+    private Object cacheSnapsWith(ProceedingJoinPoint joinPoint) throws Throwable {
+        var sender = (Long)joinPoint.getArgs()[0];
+        var receiver = (Long)joinPoint.getArgs()[1];
+
+        String SNAPS_WITH_KEY = "content:snaps-with:%s:%s";
+        var key = SNAPS_WITH_KEY.formatted(sender, receiver);
+        var entry = snapsWithCache.get(key);
+
+        if(entry!=null && !entry.isExpired()){
+            return Flux.fromIterable((Iterable<?>)entry.getValue());
+        } else {
+            var result = (Flux<?>)joinPoint.proceed();
+            var snaps = result.toIterable();
+
+            snapsWithCache.put(key, new CacheEntry(snaps));
             return result;
         }
     }
