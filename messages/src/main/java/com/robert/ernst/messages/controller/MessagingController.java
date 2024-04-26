@@ -19,7 +19,7 @@ import reactor.core.publisher.Mono;
 public class MessagingController {
     private final MessagingService messagingService;
 
-    @SendTo("/topic/messages")
+    @SendTo("/topic/reply")
     @MessageMapping("/sendMessage")
     public Mono<Message> sendMessage(@Payload MessageRequest message) {
         return messagingService.sendMessage(message);

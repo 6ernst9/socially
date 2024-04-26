@@ -4,6 +4,7 @@ import com.robert.ernst.api_gateway.configuration.microservices.MicroserviceFact
 import com.robert.ernst.api_gateway.configuration.SecurityProperties;
 import com.robert.ernst.api_gateway.dto.RequestContext;
 import io.micrometer.core.annotation.Timed;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -40,20 +41,26 @@ public class GatewayService {
     }
 
     @Timed(value = "backend.request")
-    public Mono<Object> post(String path, Object body){
+    public Mono<Object> post(String path, @Nullable Object body){
         var headers = RequestContext.getHeaders();
-        var url = microserviceFactory.getUrl(path);
+        var url = microserviceFactory.getUrl(URLDecoder.decode(path, StandardCharsets.UTF_8));
 
-        var webRequest = webClient.post()
+        WebClient.RequestHeadersSpec<? extends WebClient.RequestHeadersSpec<?>> webRequest;
+
+        var request = webClient.post()
                 .uri(url)
                 .headers(httpHeaders -> headers.forEach(httpHeaders::set))
                 .header("clientId", securityProperties.getClientId())
                 .header("clientSecret", securityProperties.getClientSecret())
                 .header("X-FI-SY-PATH", path)
-                .body(Mono.just(body), Object.class)
                 .accept(MediaType.APPLICATION_JSON);
 
-        return handleResponse(webRequest);
+        if(body != null){
+            webRequest = request.body(Mono.just(body), Object.class);
+            return handleResponse(webRequest);
+        } else {
+            return handleResponse(request);
+        }
     }
 
     @Timed(value = "backend.request")

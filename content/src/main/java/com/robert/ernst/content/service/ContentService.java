@@ -54,7 +54,7 @@ public class ContentService {
     }
 
     @CacheableEvict(method = "openSnap")
-    public Mono<Content> openSnap(Long id, Long userId){
+    public Mono<Content> openSnap(String id, Long userId){
         return contentRepository.findById(id)
                 .flatMap(snap -> {
                     var seen = snap.getSeen();
@@ -66,7 +66,7 @@ public class ContentService {
     }
 
     @CacheableEvict(method = "openSnap")
-    public Mono<Content> dismissSnap(Long id, Long userId, boolean reload){
+    public Mono<Content> dismissSnap(String id, Long userId, boolean reload){
         if(reload){
             //TODO handle reloading notification
         }
@@ -109,7 +109,7 @@ public class ContentService {
     }
 
     @CacheableEvict(method = "openStory")
-    public Mono<Content> openStory(Long id,Long userId){
+    public Mono<Content> openStory(String id,Long userId){
         return contentRepository.findById(id)
                 .flatMap(story -> {
                     var seen = story.getSeen();
@@ -120,7 +120,7 @@ public class ContentService {
     }
 
     @CacheableEvict(method = "deleteStory")
-    public Mono<Content> deleteStory(Long id){
+    public Mono<Content> deleteStory(String id){
         var story = contentRepository.findById(id);
         return contentRepository.deleteById(id).then(story);
     }

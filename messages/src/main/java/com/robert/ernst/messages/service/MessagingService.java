@@ -33,11 +33,13 @@ public class MessagingService {
 
     @CacheableReactive(key = "chats")
     public Flux<Message> getChats(Long senderId, Long receiverId){
+        log.info("get messages");
         return messageRepository.getChats(senderId, receiverId);
     }
 
     @CacheableEvict(method = "send")
     public Mono<Message> sendMessage(MessageRequest messageRequest) {
+        log.info("Added message {}", messageRequest);
         return messageRepository.save(
                 new Message(
                         messageRequest.senderId(),

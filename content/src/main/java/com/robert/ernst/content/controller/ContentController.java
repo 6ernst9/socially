@@ -35,7 +35,7 @@ public class ContentController {
     @GetMapping("open-snap/{userId}/{id}")
     @WmtSecurityMapping(path = "content.open-snap")
     public Mono<Content> openSnap(@PathVariable Long userId,
-                                  @PathVariable Long id){
+                                  @PathVariable String id){
         log.info("Received GET (reload snap) request by userId: {}, for snap id: {}", userId, id);
         return contentService.openSnap(id, userId);
     }
@@ -43,7 +43,7 @@ public class ContentController {
     @GetMapping("reload-snap/{userId}/{id}")
     @WmtSecurityMapping(path = "content.reload-snap")
     public Mono<Content> reloadSnap(@PathVariable Long userId,
-                                    @PathVariable Long id){
+                                    @PathVariable String id){
         log.info("Received GET (reload snap) request by userId: {}, for snap id: {}", userId, id);
         return contentService.openSnap(id, userId)
                 .flatMap(snap -> contentService.dismissSnap(id, userId, true).then(Mono.just(snap)));
@@ -52,7 +52,7 @@ public class ContentController {
     @GetMapping("dismiss-snap/{userId}/{id}")
     @WmtSecurityMapping(path = "content.dismiss-snap")
     public Mono<Void> dismissSnap(@PathVariable Long userId,
-                                  @PathVariable Long id){
+                                  @PathVariable String id){
         log.info("Received GET (dismiss snap) request for snap id: {}", id);
         return contentService.dismissSnap(id, userId,false).then(Mono.empty());
     }
@@ -66,7 +66,7 @@ public class ContentController {
 
     @PostMapping("open-story/{userId}/{id}")
     @WmtSecurityMapping(path = "content.open-story")
-    public Mono<Void> openStory(@PathVariable Long userId, @PathVariable Long id){
+    public Mono<Void> openStory(@PathVariable Long userId, @PathVariable String id){
         log.info("Received POST (open story) request for userId: {}, and story id: {}", userId, id);
         return contentService.openStory(id, userId)
                 .then(Mono.empty());
@@ -93,7 +93,7 @@ public class ContentController {
 
     @DeleteMapping("delete-story/{id}")
     @WmtSecurityMapping(path = "content.delete-story")
-    public Mono<String> deleteStory(@PathVariable Long id){
+    public Mono<String> deleteStory(@PathVariable String id){
         log.info("Received DELETE (delete story) request for story id: {}", id);
         return contentService.deleteStory(id)
                 .then(Mono.just("Story deleted successfully"));

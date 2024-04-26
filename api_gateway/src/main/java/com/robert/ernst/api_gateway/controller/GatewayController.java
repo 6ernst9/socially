@@ -3,6 +3,7 @@ package com.robert.ernst.api_gateway.controller;
 import com.robert.ernst.api_gateway.dto.GetBody;
 import com.robert.ernst.api_gateway.dto.ReqBody;
 import com.robert.ernst.api_gateway.service.GatewayService;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,7 @@ public class GatewayController {
     }
 
     @PostMapping
-    public Mono<Object> post(@RequestParam String path, @RequestBody Object body) {
+    public Mono<Object> post(@RequestParam String path, @RequestBody @Nullable Object body) {
         log.info("Received POST request to {}, with body: {}", path, body);
         return gatewayService.post(path, body);
     }

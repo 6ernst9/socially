@@ -10,7 +10,7 @@ import reactor.core.publisher.Flux;
 import java.time.LocalDateTime;
 
 @Repository
-public interface ContentRepository extends ReactiveMongoRepository<Content, Long> {
+public interface ContentRepository extends ReactiveMongoRepository<Content, String> {
     @Query("{ 'receivers': { '$in': [?0] }, 'type': 'snap' }")
     Flux<Content> getSnapsByUserId(Long userId);
 
