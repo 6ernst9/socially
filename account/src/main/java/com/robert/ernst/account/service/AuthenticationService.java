@@ -1,9 +1,8 @@
 package com.robert.ernst.account.service;
 
-import com.robert.ernst.account.dto.Account;
-import com.robert.ernst.account.dto.LoginParams;
-import com.robert.ernst.account.dto.RegistrationParams;
+import com.robert.ernst.account.dto.*;
 import com.robert.ernst.account.repository.AccountsRepository;
+import com.robert.ernst.account.repository.SessionRepository;
 import com.robert.ernst.account.util.Validators;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -11,25 +10,31 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
     private final AccountsRepository accountsRepository;
+    private final SessionRepository sessionRepository;
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    public Mono<String> login(@NonNull LoginParams loginParams){
+    public Mono<Long> login(@NonNull LoginParams loginParams){
+        var headers = RequestContext.getHeaders();
+
         return mapLoginParamsToAccount(loginParams).flatMap(account -> {
             if (loginParams.password().equals(account.getPassword())) {
-                return Mono.just("User logged in successfully");
+                return setSession(account.getId(), headers).map(Session::getId);
             }
             return Mono.error(new RuntimeException("Invalid credentials"));
         }).switchIfEmpty(Mono.error(new RuntimeException("Invalid username, email, or password")));
     }
 
-    public Mono<Account> register(@NonNull RegistrationParams registrationParams){
+    public Mono<Long> register(@NonNull RegistrationParams registrationParams){
         String hashedPassword = encoder.encode(registrationParams.password());
+        var headers = RequestContext.getHeaders();
 
-        return accountsRepository.save(new Account(
+        var account = accountsRepository.save(new Account(
                 registrationParams.username(),
                 registrationParams.email(),
                 hashedPassword,
@@ -38,6 +43,12 @@ public class AuthenticationService {
                 .doOnError(err -> {
                     throw new RuntimeException("Username, email or password already used by another account");
                 });
+
+        return account.flatMap(acc -> setSession(acc.getId(), headers).map(Session::getId));
+    }
+
+    public Mono<String> logout(Long id) {
+        return sessionRepository.deleteById(id).then(Mono.just("User logged out successfully"));
     }
 
     private Mono<Account> mapLoginParamsToAccount(LoginParams loginParams){
@@ -48,5 +59,15 @@ public class AuthenticationService {
         } else {
             return accountsRepository.findAccountByUsername(loginParams.username());
         }
+    }
+
+    private Mono<Session> setSession(Long id, Map<String, String> headers) {
+        return sessionRepository.save(
+                new Session(
+                    id,
+                    headers.get("X-FI-SY-IP"),
+                    headers.get("X-FI-SY-DEVICE"),
+                    headers.get("X-FI-SY-SITE-ID"))
+        );
     }
 }

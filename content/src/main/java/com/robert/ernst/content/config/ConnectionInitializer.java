@@ -15,14 +15,14 @@ public class ConnectionInitializer {
 
     @PostConstruct
     void initConnections(){
-        var connection1 = new Content("snap", "", 1L, List.of(2L, 3L, 4L));
-        var connection2 = new Content("snap", "", 2L, List.of(1L, 3L, 4L));
-        var connection3 = new Content("snap", "", 3L, List.of(1L, 2L, 4L));
-        var connection4 = new Content("snap", "", 4L, List.of(1L, 2L, 3L));
-        var connection5 = new Content("snap", "", 4L, List.of(1L, 3L));
-        var connection6 = new Content("snap", "", 3L, List.of(1L, 2L));
-        var connection7 = new Content("snap", "", 2L, List.of(1L, 3L));
-        var connection8 = new Content("snap", "", 1L, List.of(2L, 3L));
+        var connection1 = new Content("snap", "https://firebasestorage.googleapis.com/v0/b/isproject-6332b.appspot.com/o/profile%2Fp2.jpg?alt=media&token=51e07e31-2977-4010-a4f8-793d554d87cc", 1L, List.of(2L, 3L, 4L));
+        var connection2 = new Content("snap", "https://firebasestorage.googleapis.com/v0/b/isproject-6332b.appspot.com/o/profile%2Fp2.jpg?alt=media&token=51e07e31-2977-4010-a4f8-793d554d87cc", 2L, List.of(1L, 3L, 4L));
+        var connection3 = new Content("snap", "https://firebasestorage.googleapis.com/v0/b/isproject-6332b.appspot.com/o/profile%2Fp2.jpg?alt=media&token=51e07e31-2977-4010-a4f8-793d554d87cc", 3L, List.of(1L, 2L, 4L));
+        var connection4 = new Content("snap", "https://firebasestorage.googleapis.com/v0/b/isproject-6332b.appspot.com/o/profile%2Fp2.jpg?alt=media&token=51e07e31-2977-4010-a4f8-793d554d87cc", 4L, List.of(1L, 2L, 3L));
+        var connection5 = new Content("snap", "https://firebasestorage.googleapis.com/v0/b/isproject-6332b.appspot.com/o/profile%2Fp2.jpg?alt=media&token=51e07e31-2977-4010-a4f8-793d554d87cc", 4L, List.of(1L, 3L));
+        var connection6 = new Content("snap", "https://firebasestorage.googleapis.com/v0/b/isproject-6332b.appspot.com/o/profile%2Fp2.jpg?alt=media&token=51e07e31-2977-4010-a4f8-793d554d87cc", 3L, List.of(1L, 2L));
+        var connection7 = new Content("snap", "https://firebasestorage.googleapis.com/v0/b/isproject-6332b.appspot.com/o/profile%2Fp2.jpg?alt=media&token=51e07e31-2977-4010-a4f8-793d554d87cc", 2L, List.of(1L, 3L));
+        var connection8 = new Content("snap", "https://firebasestorage.googleapis.com/v0/b/isproject-6332b.appspot.com/o/profile%2Fp2.jpg?alt=media&token=51e07e31-2977-4010-a4f8-793d554d87cc  ", 1L, List.of(2L, 3L));
 
         var story1 = new Content("story", "https://firebasestorage.googleapis.com/v0/b/isproject-6332b.appspot.com/o/profile%2Fin5.jpg?alt=media&token=9fb6c0fe-dfae-4d80-ac26-7e38f935ab2c", 3L, List.of(1L, 3L, 4L));
         var story2 = new Content("story", "https://firebasestorage.googleapis.com/v0/b/isproject-6332b.appspot.com/o/profile%2Fp2.jpg?alt=media&token=51e07e31-2977-4010-a4f8-793d554d87cc", 2L, List.of(1L, 2L, 4L));

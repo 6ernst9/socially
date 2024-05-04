@@ -40,23 +40,6 @@ public class ContentController {
         return contentService.openSnap(id, userId);
     }
 
-    @GetMapping("reload-snap/{userId}/{id}")
-    @WmtSecurityMapping(path = "content.reload-snap")
-    public Mono<Content> reloadSnap(@PathVariable Long userId,
-                                    @PathVariable String id){
-        log.info("Received GET (reload snap) request by userId: {}, for snap id: {}", userId, id);
-        return contentService.openSnap(id, userId)
-                .flatMap(snap -> contentService.dismissSnap(id, userId, true).then(Mono.just(snap)));
-    }
-
-    @GetMapping("dismiss-snap/{userId}/{id}")
-    @WmtSecurityMapping(path = "content.dismiss-snap")
-    public Mono<Void> dismissSnap(@PathVariable Long userId,
-                                  @PathVariable String id){
-        log.info("Received GET (dismiss snap) request for snap id: {}", id);
-        return contentService.dismissSnap(id, userId,false).then(Mono.empty());
-    }
-
     @GetMapping("get-stories/{userId}")
     @WmtSecurityMapping(path = "content.get-stories")
     public Flux<Content> getStories(@PathVariable Long userId){
@@ -74,21 +57,17 @@ public class ContentController {
 
     @PostMapping("send-snap")
     @WmtSecurityMapping(path = "content.send-snap")
-    public Mono<String> sendSnap(@RequestBody ContentDto content){
+    public Mono<Void> sendSnap(@RequestBody ContentDto content){
         log.info("Received POST (send snap) request with content: {}", content);
         return contentService.sendSnap(content)
-                .flatMap(snap -> {
-                    //TODO handle notification;
-                    return Mono.just("Snap sent successfully");
-                });
+                .then(Mono.empty());
     }
 
     @PostMapping("add-story")
     @WmtSecurityMapping(path = "content.add-story")
-    public Mono<String> addStory(@RequestBody ContentDto content){
+    public Mono<Void> addStory(@RequestBody ContentDto content){
         log.info("Received POST (add story) request with content: {}", content);
-        return contentService.addStory(content)
-                .then(Mono.just("Story added successfully"));
+        return contentService.addStory(content).then(Mono.empty());
     }
 
     @DeleteMapping("delete-story/{id}")

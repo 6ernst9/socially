@@ -40,4 +40,12 @@ public class Connection {
         this.blocked = new ArrayList<>();
         this.streak = new ArrayList<>();
     }
+
+    public Connection(@NonNull Long id,@NonNull List<User> friends, @NonNull List<Streak> streak){
+        this.id = id;
+        this.friends = friends;
+        this.requests = new ArrayList<>();
+        this.blocked = new ArrayList<>();
+        this.streak = streak;
+    }
 }

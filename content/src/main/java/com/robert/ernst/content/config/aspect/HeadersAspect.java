@@ -17,7 +17,7 @@ import java.util.Set;
 public class HeadersAspect {
     Set<String> wmtHeaders = Set.of("X-FI-SY-IP", "X-FI-SY-DEVICE", "X-FI-SY-SITE-ID", "Authorization");
 
-    @Pointcut("execution(* com.robert.ernst.content.controller.ContentController.sendSnap())")
+    @Pointcut("execution(* com.robert.ernst.content.controller.ContentController.*(..))")
     public void controllerMethods() {
     }
 

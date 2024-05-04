@@ -18,8 +18,7 @@ public interface ContentRepository extends ReactiveMongoRepository<Content, Stri
     Flux<Content> getStoriesByUserId(Long userId);
 
     @Query("{ '$and': [ { 'type': 'snap' }, " +
-            "{ '$or': [ { 'posterId': ?0, 'receivers': { '$in': [?1] } }, { 'posterId': ?1, 'receivers': { '$in': [?0] } } ] }, " +
-            "{ '$or': [ { 'seen': { '$in': [?0] } }, { 'receivers': { '$in': [?0] } } ] } ] }")
+            "{ '$or': [ { 'posterId': ?0, 'receivers': { '$in': [?1] } }, { 'posterId': ?1, 'receivers': { '$in': [?0] } } ] } ] }")
     Flux<Content> getSnapsBetween(Long posterId, Long receiverId, Sort sort);
 
     @Query("{ 'posterId': ?0, 'receivers': ?1, 'type': 'snap', 'timestamp': { $gte: ?2, $lte: ?3 } }")

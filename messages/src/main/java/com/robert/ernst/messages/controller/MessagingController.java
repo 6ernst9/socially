@@ -25,6 +25,7 @@ public class MessagingController {
         return messagingService.sendMessage(message);
     }
 
+    @SendTo("/topic/seen")
     @MessageMapping("/readMessage")
     public Mono<Message> readMessage(@Payload Long id) {
         return messagingService.readMessage(id);

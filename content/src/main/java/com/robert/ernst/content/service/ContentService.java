@@ -20,6 +20,8 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -41,11 +43,15 @@ public class ContentService {
     public Flux<Content> getSnaps(Long id){
         return contentRepository.getSnapsByUserId(id)
                 .map(snap -> snap.getPosterId().equals(id)
-                        ? id : snap.getPosterId())
+                        ? snap.getReceivers() : List.of(snap.getPosterId()))
+                .flatMap(Flux::fromIterable)
                 .collect(Collectors.toSet())
                 .flux()
                 .flatMap(Flux::fromIterable)
-                .flatMap(partnerId -> contentRepository.getSnapsBetween(id, partnerId, sort).last());
+                .flatMap(partnerId -> contentRepository.getSnapsBetween(id, partnerId, sort).last())
+                .collect(Collectors.toSet())
+                .flux()
+                .flatMap(Flux::fromIterable);
     }
 
     @CacheableReactive(key = "snapsWith")
@@ -65,23 +71,10 @@ public class ContentService {
                 .switchIfEmpty(Mono.error(new RuntimeException("Snap not found")));
     }
 
-    @CacheableEvict(method = "openSnap")
-    public Mono<Content> dismissSnap(String id, Long userId, boolean reload){
-        if(reload){
-            //TODO handle reloading notification
-        }
-
-        return contentRepository.findById(id)
-                .flatMap(snap -> {
-                    var receivers = snap.getReceivers();
-                    receivers.remove(userId);
-                    snap.setReceivers(receivers);
-                    return contentRepository.save(snap);
-                });
-    }
-
     @CacheableEvict(method = "addSnap")
     public Mono<Content> sendSnap(ContentDto snap){
+        var headers = RequestContext.getHeaders();
+
         var content = contentRepository.save(
                 new Content(
                         snap.type(),
@@ -89,7 +82,7 @@ public class ContentService {
                         snap.posterId(),
                         snap.receivers()));
 
-        snap.receivers().forEach(receiver -> updateStreak(snap.posterId(), receiver));
+        snap.receivers().forEach(receiver -> updateStreak(snap.posterId(), receiver, headers));
         return content;
     }
 
@@ -125,7 +118,7 @@ public class ContentService {
         return contentRepository.deleteById(id).then(story);
     }
 
-    private void updateStreak(Long sender, Long receiver) {
+    private void updateStreak(Long sender, Long receiver, Map<String, String> headers) {
         var todayStart = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
         var todayEnd = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
 
@@ -136,15 +129,13 @@ public class ContentService {
                 .collectList()
                 .doOnNext(list -> {
                     if(!list.isEmpty()){
-                        makeRequest(sender, receiver);
+                        makeRequest(sender, receiver, headers);
                     }
                 })
                 .subscribe();
     }
 
-    private void makeRequest(Long sender, Long receiver) {
-        var headers = RequestContext.getHeaders();
-
+    private void makeRequest(Long sender, Long receiver,  Map<String, String> headers) {
         var webRequest = webClient.post()
                 .uri(connectionBaseUrl.formatted(sender, receiver))
                 .headers(httpHeaders -> headers.forEach(httpHeaders::set))

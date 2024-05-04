@@ -25,24 +25,25 @@ public class SecurityAspect {
         var requestClientSecret = request.getHeader("clientSecret");
         var authorization = request.getHeader("Authorization");
 
-        Assert.notNull(requestClientId, "clientId cannot be null");
-        Assert.notNull(requestClientSecret, "clientSecret cannot be null");
-        Assert.notNull(authorization, "authorization cannot be null");
-
-        var token = authorization.substring(7);
-
-        if (!clientId.equals(requestClientId) || !clientSecret.equals(requestClientSecret)) {
-            throw new SecurityException("Invalid clientId or secret");
-        }
-
-        if(!authorization.startsWith("Bearer") || token.length() < 120) {
-            throw new SecurityException("Invalid authorization");
-        }
-
         var requestMapping = request.getHeader("X-FI-SY-PATH");
         var siteId = request.getHeader("X-FI-SY-SITE-ID");
         var device = request.getHeader("X-FI-SY-DEVICE");
         var ipAddress = request.getHeader("X-FI-SY-IP");
+
+        Assert.notNull(requestClientId, "clientId cannot be null");
+        Assert.notNull(requestClientSecret, "clientSecret cannot be null");
+        if(!requestMapping.contains("login") && !requestMapping.contains("register") && !requestMapping.contains("logout")){
+            Assert.notNull(authorization, "authorization cannot be null");
+
+            var token = authorization.substring(7);
+            if(!authorization.startsWith("Bearer") || token.length() < 120) {
+                throw new SecurityException("Invalid authorization");
+            }
+        }
+
+        if (!clientId.equals(requestClientId) || !clientSecret.equals(requestClientSecret)) {
+            throw new SecurityException("Invalid clientId or secret");
+        }
 
         Assert.notNull(requestMapping, "path cannot be null");
         Assert.notNull(siteId, "siteId cannot be null");

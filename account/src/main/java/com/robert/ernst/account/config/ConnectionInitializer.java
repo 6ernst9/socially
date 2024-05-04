@@ -11,7 +11,7 @@ import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator;
 @Configuration
 public class ConnectionInitializer {
     @Bean
-    public ConnectionFactoryInitializer initializer(ConnectionFactory connectionFactory) {
+    public ConnectionFactoryInitializer accountInitializer(ConnectionFactory connectionFactory) {
         var initializer = new ConnectionFactoryInitializer();
         initializer.setConnectionFactory(connectionFactory);
         var populator = new CompositeDatabasePopulator();
@@ -21,4 +21,14 @@ public class ConnectionInitializer {
         return initializer;
     }
 
+
+    @Bean
+    public ConnectionFactoryInitializer sessionInitializer(ConnectionFactory connectionFactory) {
+        var initializer = new ConnectionFactoryInitializer();
+        initializer.setConnectionFactory(connectionFactory);
+        var populator = new CompositeDatabasePopulator();
+        populator.addPopulators(new ResourceDatabasePopulator(new ClassPathResource("db/session.sql")));
+        initializer.setDatabasePopulator(populator);
+        return initializer;
+    }
 }

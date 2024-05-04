@@ -56,15 +56,13 @@ public class CachingAspect {
     private void addEvict(ProceedingJoinPoint joinPoint, boolean isSnap) {
         var content = (ContentDto)joinPoint.getArgs()[0];
 
-        if(isSnap)
+        if(isSnap){
+            snapsWithCache.entrySet().removeIf(entry -> entry.getKey().contains(content.posterId().toString()));
             content.receivers().forEach(id -> {
                 snapsCache.remove(SNAPS_KEY + id);
-                snapsWithCache.forEach((key, value) -> {
-                    if(key.contains(id.toString())){
-                        snapsWithCache.remove(key);
-                    }
-                });
+                snapsWithCache.entrySet().removeIf(entry -> entry.getKey().contains(id.toString()));
             });
+        }
         else
             content.receivers().forEach(id -> storiesCache.remove(STORY_KEY + id));
     }
@@ -122,7 +120,7 @@ public class CachingAspect {
         var sender = (Long)joinPoint.getArgs()[0];
         var receiver = (Long)joinPoint.getArgs()[1];
 
-        String SNAPS_WITH_KEY = "content:snaps-with:%s:%s";
+        var SNAPS_WITH_KEY = "content:snaps-with:%s:%s";
         var key = SNAPS_WITH_KEY.formatted(sender, receiver);
         var entry = snapsWithCache.get(key);
 
