@@ -1,0 +1,39 @@
+.outer-story {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 10px 0 10px 20px;
+}
+
+.outer-story p {
+    color: var(--text-color-primary);
+    font-size: 16px;
+}
+
+.inner-story {
+    width: 85px;
+    height: 85px;
+    border-radius: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #fce205;
+    cursor: pointer;
+}
+
+.inner-story img, .inner-story-seen img {
+    width: 95%;
+    height: 95%;
+    border-radius: 60px;
+}
+
+.inner-story-seen {
+    width: 87px;
+    height: 87px;
+    border-radius: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--third-gray);
+    cursor: pointer;
+}

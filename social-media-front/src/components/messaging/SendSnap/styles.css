@@ -1,0 +1,65 @@
+.chat-overview-send-snap-container{
+    aspect-ratio: 9/16;
+    width: 360px;
+    position: absolute;
+    border-radius: 20px;
+    border: 1px solid #989898;
+    background-color: var(--background-color);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-direction: column;
+}
+
+.chat-overview-send-snap-back {
+    width: 50px;
+    height: 50px;
+    margin: 10px;
+    background-color: var(--second-gray);
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.chat-overview-send-snap-container-header{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-overview-send-snap-send-back {
+    height: 50px;
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background-color: #00b4d8;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.chat-overview-send-snap-send-back svg {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    color: white;
+}
+
+.chat-overview-send-snap-send-title{
+    font-weight: bold;
+    font-size: 18px;
+    color: white;
+    margin: 15px;
+}
+
+.chat-overview-send-snap-back svg {
+    width: 24px;
+    height: 24px;
+    color: var(--text-color-primary);
+}

@@ -1,0 +1,24 @@
+server:
+  port: 8085
+  error:
+    include-message: always
+    include-binding-errors: always
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+
+connection:
+  base-url: "http://localhost:8083/api/v1/update-snapstreak/%s/%s"
+
+security:
+  client-id: uuidgen
+  client-secret: "Oasz/0+zo6oCnBDIMzhgmxcuhWN5NLkY36MEvrldxk4lyN7aab9D+kyGGZAfeq0iRSoV20bo6mIIgs27nRjLJFukqnOrJzwgRSB1rhy5ZiPXl84R3eoZmt4RS3UZRl7H"
+
+spring:
+  data:
+    mongodb:
+      database: socialmedia
+      host: localhost
+      port: 27017

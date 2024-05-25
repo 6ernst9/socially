@@ -1,0 +1,12 @@
+.credits-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+}
+
+.credits-links {
+    display: flex;
+    flex-direction: row;
+    gap: 5px
+}

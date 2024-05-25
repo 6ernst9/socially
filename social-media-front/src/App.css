@@ -1,0 +1,40 @@
+body {
+  padding: 0;
+  margin: 0;
+  z-index: 0;
+}
+
+/* Default light theme */
+:root {
+  --background-color: #fff;
+  --text-color-primary: #000;
+  --theme-color-secondary: #00b4d8;
+  --theme-color-primary: #fce205;
+  --first-gray: #efefef;
+  --second-gray: #e0e0e0;
+  --third-gray: #d9d9d9;
+  --line-color: #d9d9d9;
+  --fourth-gray: #555555;
+  --form-color: rgba(224, 224, 224, 0.75);
+}
+
+.dark-theme {
+  --background-color: #000;
+  --text-color-primary: #fff;
+  --first-gray: #121212;
+  --second-gray: #242424;
+  --line-color: #242424;
+  --third-gray: #989898;
+  --fourth-gray: #989898;
+  --form-color: rgba(36, 36, 36, 0.75);
+}
+
+.link-btn {
+  text-decoration: none;
+}
+
+@media (max-width: 970px) {
+  .widget-main{
+    width: 70vw;
+  }
+}

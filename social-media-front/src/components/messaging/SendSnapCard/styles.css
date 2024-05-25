@@ -1,0 +1,84 @@
+.chat-overview-send-snap-card{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-overview-send-snap-card-head{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.chat-overview-send-snap-card-tail{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+}
+
+.chat-overview-send-snap-card-profile {
+    width: 50px;
+    height: 50px;
+    border-radius: 50px;
+    margin: 10px 20px;
+}
+
+.chat-overview-send-snap-card-selector {
+    cursor: pointer;
+    width: 20px;
+    border-radius: 20px;
+    margin-right: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--third-gray);
+    background: none;
+}
+
+.chat-overview-send-snap-card-selector svg, .chat-overview-send-snap-card-selector-selected svg{
+    width: 15px;
+    height: 15px;
+    color: var(--background-color);
+}
+
+.chat-overview-send-snap-card-selector-selected {
+    cursor: pointer;
+    border-radius: 20px;
+    width: 20px;
+    margin-right: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #00b4d8;
+    background-color: #00b4d8;
+}
+
+.chat-overview-send-snap-card-name{
+    font-weight: bold;
+    font-size: 18px;
+    color: var(--text-color-primary);
+}
+
+.chat-overview-send-snap-card-name-selected {
+    font-weight: bold;
+    font-size: 18px;
+    color: #00b4d8;
+}
+
+.chat-overview-send-snap-streak{
+    font-size: 16px;
+    color: var(--text-color-primary)
+}
+
+.chat-overview-send-snap-streak-selected{
+    font-size: 16px;
+    color: #00b4d8;
+}
+
