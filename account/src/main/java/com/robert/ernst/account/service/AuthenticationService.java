@@ -26,8 +26,8 @@ public class AuthenticationService {
             if (loginParams.password().equals(account.getPassword())) {
                 return setSession(account.getId(), headers).map(Session::getId);
             }
-            return Mono.error(new RuntimeException("Invalid credentials"));
-        }).switchIfEmpty(Mono.error(new RuntimeException("Invalid username, email, or password")));
+            return Mono.error(new RuntimeException("Incorrect password"));
+        }).switchIfEmpty(Mono.error(new RuntimeException("Invalid username, email or phone number")));
     }
 
     public Mono<Long> register(@NonNull RegistrationParams registrationParams){
@@ -41,7 +41,7 @@ public class AuthenticationService {
                 registrationParams.fullName(),
                 registrationParams.phoneNumber()))
                 .doOnError(err -> {
-                    throw new RuntimeException("Username, email or password already used by another account");
+                    throw new RuntimeException("Username, email or phone number already used by another account");
                 });
 
         return account.flatMap(acc -> setSession(acc.getId(), headers).map(Session::getId));
